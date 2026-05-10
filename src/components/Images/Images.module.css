@@ -1,0 +1,116 @@
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.pagerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.95rem;
+}
+
+.pageControls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.pageNumberGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pagerButton {
+  border: 1px solid rgba(244, 164, 96, 0.5);
+  background: rgba(244, 164, 96, 0.15);
+  color: #f4a460;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pagerButton:hover:enabled {
+  background: rgba(244, 164, 96, 0.25);
+  border-color: rgba(244, 164, 96, 0.75);
+}
+
+.pagerButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pageNumberButton {
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(148, 163, 184, 0.08);
+  color: #374151;
+  border-radius: 8px;
+  min-width: 32px;
+  height: 32px;
+  font-size: 0.82rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.45rem;
+}
+
+.pageNumberButton:hover:enabled {
+  border-color: rgba(244, 164, 96, 0.7);
+  background: rgba(244, 164, 96, 0.16);
+}
+
+.pageNumberButtonActive {
+  background: #f4a460;
+  border-color: #f4a460;
+  color: #111827;
+  font-weight: 600;
+}
+
+.pageNumberButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pageSizeControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  color: #4b5563;
+}
+
+.pageSizeSelect {
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.pageSizeSelect:disabled {
+  opacity: 0.45;
+}
+
+.pageSummary {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  color: #9ca3af;
+  font-size: 0.95rem;
+}

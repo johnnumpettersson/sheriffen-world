@@ -1,0 +1,276 @@
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import type { GalleryImage } from "../../types";
+import type { Locale } from "../../i18n";
+import styles from "./MapView.module.css";
+import { useEffect } from "react";
+
+const WORLD_CENTER: [number, number] = [20, 0];
+const WORLD_ZOOM = 2;
+const WORLD_BOUNDS: L.LatLngBoundsExpression = [
+  [-85, -180],
+  [85, 180],
+];
+const BASEMAP_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const BASEMAP_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+// Fix default Leaflet marker icons broken by bundlers
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)
+  ._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+function createImageIcon(dataUrl: string, isSelected: boolean) {
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        width: 48px; height: 48px;
+        border-radius: 50%;
+        border: 3px solid ${isSelected ? "#4f46e5" : "#fff"};
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        overflow: hidden;
+        background: #e5e7eb;
+        transition: border-color 0.2s;
+      ">
+        <img src="${dataUrl}" alt="" style="width:100%;height:100%;object-fit:cover;" />
+      </div>`,
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
+  });
+}
+
+const markerIconCache = new Map<string, L.DivIcon>();
+
+function getCachedImageIcon(dataUrl: string, isSelected: boolean): L.DivIcon {
+  const cacheKey = `${dataUrl}|${isSelected ? "selected" : "default"}`;
+  const cached = markerIconCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const icon = createImageIcon(dataUrl, isSelected);
+  markerIconCache.set(cacheKey, icon);
+  return icon;
+}
+
+interface FlyToSelectedProps {
+  selectedImage: GalleryImage | null;
+}
+
+function FlyToSelected({ selectedImage }: FlyToSelectedProps) {
+  const map = useMap();
+  useEffect(() => {
+    if (selectedImage?.location) {
+      map.flyTo([selectedImage.location.lat, selectedImage.location.lng], 8, {
+        duration: 1.2,
+      });
+    }
+  }, [selectedImage, map]);
+  return null;
+}
+
+function ResetWorldViewControl({ locale }: { locale: Locale }) {
+  const map = useMap();
+  const t =
+    locale === "sv"
+      ? {
+          world: "Världskartan",
+          zoomOutWorld: "Zooma ut till varldsvy",
+        }
+      : {
+          world: "World",
+          zoomOutWorld: "Zoom out to world view",
+        };
+
+  useEffect(() => {
+    const ResetControl = L.Control.extend({
+      onAdd() {
+        const container = L.DomUtil.create(
+          "div",
+          `leaflet-bar ${styles.controlContainer}`,
+        );
+        const button = L.DomUtil.create(
+          "button",
+          styles.controlButton,
+          container,
+        );
+
+        button.type = "button";
+        button.title = t.zoomOutWorld;
+        button.setAttribute("aria-label", t.zoomOutWorld);
+        button.innerText = t.world;
+
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.on(button, "click", (event) => {
+          L.DomEvent.preventDefault(event);
+          map.flyTo(WORLD_CENTER, WORLD_ZOOM, { duration: 1 });
+        });
+
+        return container;
+      },
+    });
+
+    const control = new ResetControl({ position: "topleft" });
+
+    control.addTo(map);
+
+    return () => {
+      control.remove();
+    };
+  }, [map, t.world, t.zoomOutWorld]);
+
+  return null;
+}
+
+interface MapViewProps {
+  images: GalleryImage[];
+  selectedId: string | null;
+  onSelectMarker: (id: string) => void;
+  onOpenImage: (id: string) => void;
+  locale: Locale;
+}
+
+export default function MapView({
+  images,
+  selectedId,
+  onSelectMarker,
+  onOpenImage,
+  locale,
+}: MapViewProps) {
+  const t =
+    locale === "sv"
+      ? {
+          mapAria: "Världskarta som visar bildplatser",
+          noLocation:
+            "Ladda upp bilder med GPS-data för att visa dem på kartan",
+          unknownLocation: "Okänd plats",
+        }
+      : {
+          mapAria: "World map showing image locations",
+          noLocation: "Upload images with GPS metadata to see them on the map",
+          unknownLocation: "Unknown location",
+        };
+
+  const imagesWithLocation = images.filter((img) => img.location !== null);
+  const selectedImage = images.find((img) => img.id === selectedId) ?? null;
+
+  return (
+    <div className={styles.mapContainer}>
+      <MapContainer
+        center={WORLD_CENTER}
+        zoom={WORLD_ZOOM}
+        minZoom={WORLD_ZOOM}
+        maxBounds={WORLD_BOUNDS}
+        maxBoundsViscosity={1}
+        className={styles.map}
+        scrollWheelZoom
+        aria-label={t.mapAria}
+      >
+        <TileLayer attribution={BASEMAP_ATTRIBUTION} url={BASEMAP_URL} />
+        <ResetWorldViewControl locale={locale} />
+        <FlyToSelected selectedImage={selectedImage} />
+        {imagesWithLocation.map((img) => (
+          <Marker
+            key={img.id}
+            position={[img.location!.lat, img.location!.lng]}
+            icon={getCachedImageIcon(
+              img.mapThumbnailUrl || img.thumbnailUrl || img.dataUrl,
+              img.id === selectedId,
+            )}
+            eventHandlers={{ click: () => onSelectMarker(img.id) }}
+          >
+            <Popup>
+              <div className={styles.popup}>
+                <button
+                  type="button"
+                  className={styles.popupImageButton}
+                  onClick={() => onOpenImage(img.id)}
+                >
+                  <img
+                    src={img.mapThumbnailUrl || img.thumbnailUrl || img.dataUrl}
+                    alt={img.name}
+                    className={styles.popupImage}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </button>
+                <p className={styles.popupName}>
+                  {getLocationName(img, t.unknownLocation)}
+                </p>
+                <p className={styles.popupCoords}>
+                  {img.location!.lat.toFixed(5)}, {img.location!.lng.toFixed(5)}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+      {imagesWithLocation.length === 0 && (
+        <div className={styles.noLocationOverlay}>
+          <p>{t.noLocation}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getLocationName(image: GalleryImage, unknownLocation: string): string {
+  const location = image.location;
+
+  if (!location) {
+    return unknownLocation;
+  }
+
+  const preferredLatin = pickPreferredLatinText([
+    location.city,
+    location.country,
+    location.landmark,
+  ]);
+
+  return (
+    preferredLatin ||
+    location.city ||
+    location.country ||
+    location.landmark ||
+    unknownLocation
+  );
+}
+
+const LETTER_PATTERN = /\p{Letter}/u;
+const LATIN_SCRIPT_PATTERN = /\p{Script=Latin}/u;
+
+function isLatinScriptText(value: string): boolean {
+  for (const char of value) {
+    if (!LETTER_PATTERN.test(char)) {
+      continue;
+    }
+
+    if (!LATIN_SCRIPT_PATTERN.test(char)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function pickPreferredLatinText(candidates: Array<string | undefined>): string {
+  const normalized = candidates
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter((value) => value !== "");
+
+  if (normalized.length === 0) {
+    return "";
+  }
+
+  const latin = normalized.find((value) => isLatinScriptText(value));
+  return latin ?? normalized[0];
+}

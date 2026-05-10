@@ -1,0 +1,232 @@
+.card {
+  position: relative;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.15s;
+  background: #fff;
+}
+
+.card:hover {
+  border-color: #6366f1;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.2);
+  transform: translateY(-2px);
+}
+
+.card:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+
+.selected {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+}
+
+.imageWrapper {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.flagBadge {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.flagIcon {
+  width: 1.15rem;
+  height: auto;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  display: block;
+}
+
+.flagFallback {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.pinBadge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.unpreviewedBadge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  font-size: 0.64rem;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: #b91c1c;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(185, 28, 28, 0.24);
+  border-radius: 999px;
+  padding: 0.12rem 0.38rem;
+  line-height: 1.2;
+}
+
+.unpreviewedBadgeClearing {
+  animation: fadePreviewBadge 0.45s ease forwards;
+}
+
+@keyframes fadePreviewBadge {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.info {
+  padding: 0.5rem 0.6rem 0.4rem;
+}
+
+.name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.countryRow {
+  margin: 0.16rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+}
+
+.countryName {
+  min-width: 0;
+  font-size: 0.72rem;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin: 0.15rem 0 0;
+}
+
+.coords {
+  font-size: 0.68rem;
+  color: #6366f1;
+  margin: 0.1rem 0 0;
+  font-family: monospace;
+}
+
+.downloadIcon {
+  background: none;
+  border: none;
+  padding: 0.1rem 0;
+  margin: 0.1rem 0 0.1rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #4b5563;
+  opacity: 0.75;
+  transition:
+    opacity 0.2s,
+    color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  line-height: 1;
+}
+
+.downloadIcon:hover {
+  color: #0891b2;
+  opacity: 1;
+}
+
+.removeBtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 0.2s,
+    color 0.2s;
+}
+
+.editBtn {
+  position: absolute;
+  top: 6px;
+  right: 36px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 0.2s,
+    color 0.2s;
+}
+
+.card:hover .removeBtn {
+  opacity: 1;
+}
+
+.card:hover .editBtn {
+  opacity: 1;
+}
+
+.editBtn:hover {
+  color: #4f46e5;
+}
+
+.removeBtn:hover {
+  color: #dc2626;
+}

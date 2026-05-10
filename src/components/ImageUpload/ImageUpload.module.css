@@ -1,0 +1,178 @@
+.wrapper {
+  width: 100%;
+}
+
+@keyframes dashSpin {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.dropzone {
+  position: relative;
+  border: 2px dashed rgba(244, 164, 96, 0.5);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  text-align: center;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transition:
+    background 0.25s,
+    border-color 0.25s,
+    box-shadow 0.25s;
+  overflow: hidden;
+}
+
+.dropzone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(244, 164, 96, 0.08) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.dropzone:hover,
+.dropzone:focus-visible {
+  background: rgba(244, 164, 96, 0.07);
+  border-color: rgba(244, 164, 96, 0.85);
+  box-shadow:
+    0 4px 32px rgba(244, 164, 96, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
+.dropzone:hover .uploadIcon,
+.dropzone:focus-visible .uploadIcon {
+  animation: float 1.6s ease-in-out infinite;
+}
+
+.dragging {
+  background: rgba(244, 164, 96, 0.12);
+  border-color: #f4a460;
+  box-shadow:
+    0 0 0 4px rgba(244, 164, 96, 0.2),
+    0 4px 32px rgba(244, 164, 96, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.dragging .uploadIcon {
+  animation: float 0.9s ease-in-out infinite;
+}
+
+.processing {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.uploadIcon {
+  width: 52px;
+  height: 52px;
+  color: #f4a460;
+  opacity: 0.9;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 1rem;
+  color: #f0f0f0;
+  margin: 0;
+}
+
+.label strong {
+  color: #f4a460;
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: rgba(208, 208, 208, 0.7);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.authHint {
+  margin: 0.25rem 0 0;
+  font-size: 0.76rem;
+  color: rgba(244, 164, 96, 0.9);
+  font-weight: 600;
+}
+
+.processingText {
+  font-size: 1rem;
+  color: #f4a460;
+  font-weight: 500;
+}
+
+.progressFile {
+  margin: 0.15rem 0 0;
+  max-width: 100%;
+  font-size: 0.78rem;
+  color: rgba(240, 240, 240, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progressBarTrack {
+  width: min(340px, 100%);
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+  border: 1px solid rgba(244, 164, 96, 0.35);
+}
+
+.progressBarFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f4a460 0%, #ffb87d 100%);
+  transition: width 0.15s linear;
+}
+
+.progressStats {
+  margin: 0;
+  font-size: 0.74rem;
+  color: rgba(208, 208, 208, 0.86);
+}
+
+.error {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #ff6b6b;
+}
+
+.info {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #51cf66;
+}
