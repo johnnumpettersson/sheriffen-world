@@ -90,14 +90,28 @@ export default function ImageCard({
         </p>
         <button
           className={styles.downloadIcon}
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
-            const link = document.createElement("a");
-            link.href = image.dataUrl || image.thumbnailUrl || "";
-            link.download = image.name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            try {
+              const response = await fetch(image.dataUrl);
+              if (!response.ok) throw new Error("Download failed");
+              const blob = await response.blob();
+              const objectUrl = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = objectUrl;
+              link.download = image.name;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(objectUrl);
+            } catch {
+              const link = document.createElement("a");
+              link.href = image.dataUrl;
+              link.download = image.name;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }
           }}
           aria-label={t.downloadImage(image.name)}
           title={t.downloadImage(image.name)}

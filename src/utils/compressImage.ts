@@ -1,8 +1,3 @@
-import Pica from "pica";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const pica = (Pica as any).default || Pica;
-
 const MAX_DIMENSION = 3200;
 const WEBP_QUALITY = 0.85;
 
@@ -13,24 +8,14 @@ interface CompressionResult {
   compressionRatio: number;
 }
 
-async function getImageDimensions(file: File): Promise<{
-  width: number;
-  height: number;
-}> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve({ width: img.width, height: img.height });
-    img.onerror = () => reject(new Error("Failed to load image"));
-    img.src = URL.createObjectURL(file);
-  });
-}
-
 export async function compressImage(file: File): Promise<CompressionResult> {
   const originalSize = file.size;
 
   try {
-    // Get image dimensions
-    const { width, height } = await getImageDimensions(file);
+    // createImageBitmap decodes the file once and correctly applies EXIF
+    // orientation, so width/height always reflect the displayed orientation.
+    const bitmap = await createImageBitmap(file);
+    const { width, height } = bitmap;
 
     // If image is already small, skip compression
     if (
@@ -38,6 +23,7 @@ export async function compressImage(file: File): Promise<CompressionResult> {
       height <= MAX_DIMENSION &&
       originalSize < 2 * 1024 * 1024
     ) {
+      bitmap.close();
       return {
         file,
         originalSize,
@@ -58,25 +44,16 @@ export async function compressImage(file: File): Promise<CompressionResult> {
       newWidth = Math.round((width / height) * MAX_DIMENSION);
     }
 
-    // Create canvas for resizing
     const canvas = document.createElement("canvas");
     canvas.width = newWidth;
     canvas.height = newHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Could not get 2d context");
+    ctx.drawImage(bitmap, 0, 0, newWidth, newHeight);
+    bitmap.close();
 
-    // Use Pica for high-quality resizing
-    const picaInstance = pica();
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-
-    await new Promise<void>((resolve) => {
-      img.onload = () => resolve();
-    });
-
-    const resizedCanvas = await picaInstance.resize(img, canvas);
-
-    // Convert to blob with quality setting
     return new Promise<CompressionResult>((resolve, reject) => {
-      resizedCanvas.toBlob(
+      canvas.toBlob(
         (blob: Blob | null) => {
           if (!blob) {
             reject(new Error("Failed to compress image"));
