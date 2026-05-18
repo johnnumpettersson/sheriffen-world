@@ -456,9 +456,9 @@ export default function App() {
   const previewImage = previewIndex >= 0 ? images[previewIndex] : null;
   const previewLocationKey = previewImage?.location
     ? getCoordinateCacheKey(
-        previewImage.location.lat,
-        previewImage.location.lng,
-      )
+      previewImage.location.lat,
+      previewImage.location.lng,
+    )
     : null;
   const previewResolvedLocation = previewLocationKey
     ? previewResolvedLocationCache[previewLocationKey]
@@ -790,8 +790,8 @@ export default function App() {
         const country =
           countryCode && typeof Intl?.DisplayNames === "function"
             ? (new Intl.DisplayNames(["en"], { type: "region" }).of(
-                countryCode.toUpperCase(),
-              ) ?? data.country)
+              countryCode.toUpperCase(),
+            ) ?? data.country)
             : data.country;
 
         setPreviewResolvedLocationCache((prev) => ({
@@ -842,7 +842,7 @@ export default function App() {
         <div className={styles.headerContent}>
           <div className={styles.brandRow}>
             <img
-              src="/raccoon.png"
+              src="/sheriffen.jpg"
               alt="Sheriffen World logo"
               className={styles.logo}
             />
@@ -1162,8 +1162,8 @@ export default function App() {
                     {isResolvingPreviewLocation
                       ? t.resolvingLocation
                       : previewResolvedLocation?.country ||
-                        previewImage.location?.country ||
-                        t.unknownLocation}
+                      previewImage.location?.country ||
+                      t.unknownLocation}
                   </span>
                 </Box>
                 <Box sx={{ fontSize: "0.86rem" }}>
@@ -1171,8 +1171,8 @@ export default function App() {
                   {isResolvingPreviewLocation
                     ? t.resolvingLocation
                     : previewResolvedLocation?.city ||
-                      previewImage.location?.city ||
-                      t.unknownLocation}
+                    previewImage.location?.city ||
+                    t.unknownLocation}
                 </Box>
                 <Box sx={{ fontSize: "0.86rem" }}>
                   <strong>{t.comment}:</strong>{" "}
