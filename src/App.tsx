@@ -832,25 +832,11 @@ export default function App() {
           "--footer-bg": theme.palette.background.paper,
           "--footer-border": theme.palette.divider,
           "--footer-text": theme.palette.text.secondary,
-          "--header-shadow": "0 2px 12px rgba(0, 0, 0, 0.6)",
-          "--header-gradient":
-            "linear-gradient(135deg, #3a3a3a 0%, #2d2d2d 100%)",
         } as React.CSSProperties
       }
     >
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <div className={styles.brandRow}>
-            <img
-              src="/sheriffen.jpg"
-              alt="Sheriffen World logo"
-              className={styles.logo}
-            />
-            <div>
-              <h1 className={styles.title}>Sheriffen World</h1>
-              <p className={styles.subtitle}>{t.subtitle}</p>
-            </div>
-          </div>
+      <main className={styles.main}>
+        <div className={styles.miniHeader}>
           <div className={styles.langToggleGroup}>
             <IconButton
               onClick={() => setLocale("sv")}
@@ -869,117 +855,42 @@ export default function App() {
               <GB className={styles.langFlag} title="English" />
             </IconButton>
           </div>
-        </div>
-      </header>
-
-      <main className={styles.main}>
-        <div className={styles.statsBar}>
-          <Stack
-            direction="row"
-            spacing={1}
-            useFlexGap
-            sx={{ flexWrap: "wrap" }}
-          >
+          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
             <Chip
               color="primary"
               variant="outlined"
+              size="small"
               label={t.imagesLabel(images.length)}
             />
             <Chip
               color="secondary"
               variant="outlined"
+              size="small"
               label={t.withGpsLabel(imagesWithLocation.length)}
             />
             {selectedImage && (
               <Chip
                 color="default"
+                size="small"
                 label={t.selectedLabel(selectedImage.name)}
               />
             )}
           </Stack>
         </div>
 
-        <nav className={styles.tabs} aria-label="View switcher">
-          <Tabs
-            value={activeTab}
-            onChange={(_, value: Tab) => {
-              setActiveTab(value);
-              if (value === "gallery") {
-                setNewUploadCount(0);
-              }
-            }}
-            aria-label="Gallery and map view tabs"
-          >
-            <Tab value="map" label={t.worldMapTab(imagesWithLocation.length)} />
-            <Tab
-              value="gallery"
-              label={
-                <Badge
-                  color="error"
-                  variant="dot"
-                  invisible={!hasUnseenUploads}
-                >
-                  <span>{t.galleryTab(images.length)}</span>
-                </Badge>
-              }
+        <div className={styles.twoColumnLayout}>
+          <aside className={styles.leftSidebar}>
+            <img
+              src="/sheriffen.jpg"
+              alt="Sheriffen World"
+              className={styles.sidebarLogo}
             />
-          </Tabs>
-        </nav>
-
-        <div className={styles.contentWrapper}>
-          <div className={styles.content}>
-            {activeTab === "gallery" ? (
-              <Images
-                images={galleryPageImages}
-                page={galleryPage}
-                totalPages={galleryTotalPages}
-                totalItems={galleryTotalItems}
-                pageSize={galleryPageSize}
-                isLoading={isGalleryLoading}
-                onPageChange={setGalleryPage}
-                onPageSizeChange={setGalleryPageSize}
-                selectedId={selectedId}
-                onSelect={(id) => {
-                  const nextId = id === selectedId ? null : id;
-                  setSelectedId(nextId);
-                  setPreviewImageId(nextId);
-                  markImageAsPreviewed(nextId);
-                }}
-                onRemove={setDeleteCandidateId}
-                onEditMetadata={handleOpenMetadataEditor}
-                unpreviewedImageIds={unpreviewedImageIds}
-                recentlyPreviewedImageIds={recentlyPreviewedImageIds}
-                locale={locale}
-              />
-            ) : (
-              <div className={styles.mapWrapper}>
-                <MapView
-                  images={images}
-                  selectedId={selectedId}
-                  onSelectMarker={(id) =>
-                    setSelectedId(id === selectedId ? null : id)
-                  }
-                  onOpenImage={(id) => {
-                    setSelectedId(id);
-                    setPreviewImageId(id);
-                    markImageAsPreviewed(id);
-                  }}
-                  locale={locale}
-                />
-              </div>
-            )}
-          </div>
-
-          <aside className={styles.sidebar}>
-            <div className={styles.sidebarLocationsSection}>
-              <CountriesList
-                images={images}
-                onSelectLocation={handleSelectSidebarLocation}
-                locale={locale}
-              />
-            </div>
-
-            <section className={styles.sidebarUploadSection}>
+            <CountriesList
+              images={images}
+              onSelectLocation={handleSelectSidebarLocation}
+              locale={locale}
+            />
+            <div className={styles.uploadSection}>
               <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
                 {authToken ? (
                   <>
@@ -1017,8 +928,79 @@ export default function App() {
                 uploadProgress={uploadProgress}
                 locale={locale}
               />
-            </section>
+            </div>
           </aside>
+
+          <div className={styles.centerColumn}>
+            <nav className={styles.tabs} aria-label="View switcher">
+              <Tabs
+                value={activeTab}
+                onChange={(_, value: Tab) => {
+                  setActiveTab(value);
+                  if (value === "gallery") {
+                    setNewUploadCount(0);
+                  }
+                }}
+                aria-label="Gallery and map view tabs"
+              >
+                <Tab value="map" label={t.worldMapTab(imagesWithLocation.length)} />
+                <Tab
+                  value="gallery"
+                  label={
+                    <Badge
+                      color="error"
+                      variant="dot"
+                      invisible={!hasUnseenUploads}
+                    >
+                      <span>{t.galleryTab(images.length)}</span>
+                    </Badge>
+                  }
+                />
+              </Tabs>
+            </nav>
+            <div className={styles.content}>
+              {activeTab === "gallery" ? (
+                <Images
+                  images={galleryPageImages}
+                  page={galleryPage}
+                  totalPages={galleryTotalPages}
+                  totalItems={galleryTotalItems}
+                  pageSize={galleryPageSize}
+                  isLoading={isGalleryLoading}
+                  onPageChange={setGalleryPage}
+                  onPageSizeChange={setGalleryPageSize}
+                  selectedId={selectedId}
+                  onSelect={(id) => {
+                    const nextId = id === selectedId ? null : id;
+                    setSelectedId(nextId);
+                    setPreviewImageId(nextId);
+                    markImageAsPreviewed(nextId);
+                  }}
+                  onRemove={setDeleteCandidateId}
+                  onEditMetadata={handleOpenMetadataEditor}
+                  unpreviewedImageIds={unpreviewedImageIds}
+                  recentlyPreviewedImageIds={recentlyPreviewedImageIds}
+                  locale={locale}
+                />
+              ) : (
+                <div className={styles.mapWrapper}>
+                  <MapView
+                    images={images}
+                    selectedId={selectedId}
+                    onSelectMarker={(id) =>
+                      setSelectedId(id === selectedId ? null : id)
+                    }
+                    onOpenImage={(id) => {
+                      setSelectedId(id);
+                      setPreviewImageId(id);
+                      markImageAsPreviewed(id);
+                    }}
+                    locale={locale}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </main>
 
@@ -1121,9 +1103,9 @@ export default function App() {
                 sx={{
                   px: 2,
                   py: 1.25,
-                  bgcolor: "#111827",
-                  color: "white",
-                  borderTop: "1px solid rgba(255, 255, 255, 0.12)",
+                  bgcolor: "#1e1e1e",
+                  color: "#f0f0f0",
+                  borderTop: "1px solid rgba(255, 255, 255, 0.1)",
                   display: "grid",
                   gap: 0.5,
                 }}
