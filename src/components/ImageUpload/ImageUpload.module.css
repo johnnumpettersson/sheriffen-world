@@ -24,7 +24,7 @@
   border: 2px dashed rgba(244, 164, 96, 0.5);
   border-radius: 10px;
   padding: 1rem 1.5rem;
-  min-height: clamp(100px, 15.6vw, 220px);
+  min-height: clamp(72px, 14vw, 202px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -146,8 +146,8 @@
 }
 
 .uploadIcon {
-  width: clamp(28px, 4vw, 52px);
-  height: clamp(28px, 4vw, 52px);
+  width: clamp(20px, 3.8vw, 55px);
+  height: clamp(20px, 3.8vw, 55px);
   color: #f4a460;
   opacity: 0.9;
   transition: color 0.2s;
@@ -155,7 +155,7 @@
 }
 
 .label {
-  font-size: clamp(0.75rem, 1.1vw, 0.95rem);
+  font-size: clamp(0.65rem, 1.1vw, 1.05rem);
   color: #f0f0f0;
   margin: 0;
   text-align: center;
@@ -166,7 +166,7 @@
 }
 
 .hint {
-  font-size: clamp(0.62rem, 0.9vw, 0.76rem);
+  font-size: clamp(0.55rem, 0.9vw, 0.82rem);
   color: rgba(208, 208, 208, 0.6);
   margin: 0;
   letter-spacing: 0.01em;

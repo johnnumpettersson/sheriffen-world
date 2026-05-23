@@ -70,7 +70,7 @@
 }
 
 .heroImage {
-  width: clamp(104px, 15.6vw, 234px);
+  width: clamp(60px, 14vw, 202px);
   height: auto;
   object-fit: contain;
   flex-shrink: 0;
@@ -78,7 +78,7 @@
 
 .heroTitle {
   font-family: "CuddleBunny", system-ui, sans-serif;
-  font-size: clamp(2rem, 6vw, 5rem);
+  font-size: clamp(1.25rem, 5.5vw, 4.95rem);
   font-weight: normal;
   margin: 0;
   background: linear-gradient(135deg, #ffb87d 0%, #f4a460 30%, #e85d2c 65%, #c24215 100%);
@@ -144,7 +144,7 @@
 
 /* ── Upload area (between hero and tabs) ── */
 .uploadArea {
-  width: clamp(260px, 40vw, 520px);
+  width: clamp(180px, 36vw, 518px);
   margin: clamp(1.5rem, 2.5vw, 2.25rem) auto 0;
 }
 
@@ -192,6 +192,12 @@
 .footerCreator {
   color: #e85d2c;
   font-weight: 600;
+}
+
+.carouselWrapper {
+  background: rgba(232, 93, 44, 0.12);
+  border-radius: 12px;
+  padding: 3px;
 }
 
 @media (max-width: 600px) {
