@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import type { GalleryImage } from "../../types";
 import type { Locale } from "../../i18n";
 import styles from "./MapView.module.css";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const WORLD_CENTER: [number, number] = [20, 0];
 const WORLD_ZOOM = 2;
@@ -77,8 +77,17 @@ function FlyToSelected({ selectedImage }: FlyToSelectedProps) {
   return null;
 }
 
-function ResetWorldViewControl({ locale }: { locale: Locale }) {
+function ResetWorldViewControl({
+  locale,
+  onReset,
+}: {
+  locale: Locale;
+  onReset?: () => void;
+}) {
   const map = useMap();
+  const onResetRef = useRef(onReset);
+  onResetRef.current = onReset;
+
   const t =
     locale === "sv"
       ? {
@@ -112,6 +121,7 @@ function ResetWorldViewControl({ locale }: { locale: Locale }) {
         L.DomEvent.on(button, "click", (event) => {
           L.DomEvent.preventDefault(event);
           map.flyTo(WORLD_CENTER, WORLD_ZOOM, { duration: 1 });
+          onResetRef.current?.();
         });
 
         return container;
@@ -135,6 +145,7 @@ interface MapViewProps {
   selectedId: string | null;
   onSelectMarker: (id: string) => void;
   onOpenImage: (id: string) => void;
+  onResetView?: () => void;
   locale: Locale;
 }
 
@@ -143,6 +154,7 @@ export default function MapView({
   selectedId,
   onSelectMarker,
   onOpenImage,
+  onResetView,
   locale,
 }: MapViewProps) {
   const t =
@@ -175,7 +187,7 @@ export default function MapView({
         aria-label={t.mapAria}
       >
         <TileLayer attribution={BASEMAP_ATTRIBUTION} url={BASEMAP_URL} />
-        <ResetWorldViewControl locale={locale} />
+        <ResetWorldViewControl locale={locale} onReset={onResetView} />
         <FlyToSelected selectedImage={selectedImage} />
         {imagesWithLocation.map((img) => (
           <Marker

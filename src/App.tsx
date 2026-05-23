@@ -200,6 +200,7 @@ export default function App() {
   } = useImageGallery();
   const [activeTab, setActiveTab] = useState<Tab>("map");
   const [newUploadCount, setNewUploadCount] = useState(0);
+  const [carouselResetSignal, setCarouselResetSignal] = useState(0);
   const [unpreviewedImageIds, setUnpreviewedImageIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -851,6 +852,9 @@ export default function App() {
                 if (value === "gallery") {
                   setNewUploadCount(0);
                 }
+                if (value === "map") {
+                  setCarouselResetSignal((prev) => prev + 1);
+                }
               }}
               aria-label="Gallery and map view tabs"
             >
@@ -924,6 +928,7 @@ export default function App() {
                       setPreviewImageId(id);
                       markImageAsPreviewed(id);
                     }}
+                    onResetView={() => setCarouselResetSignal((prev) => prev + 1)}
                     locale={locale}
                   />
                 </div>
@@ -935,6 +940,7 @@ export default function App() {
                   images={images}
                   onSelectLocation={handleSelectSidebarLocation}
                   locale={locale}
+                  resetSignal={carouselResetSignal}
                 />
               </div>
             )}

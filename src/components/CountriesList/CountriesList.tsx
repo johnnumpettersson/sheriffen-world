@@ -14,12 +14,14 @@ interface CountriesListProps {
   images: GalleryImage[];
   onSelectLocation: (imageId: string) => void;
   locale: Locale;
+  resetSignal?: number;
 }
 
 export default function CountriesList({
   images,
   onSelectLocation,
   locale,
+  resetSignal,
 }: CountriesListProps) {
   const [countries, setCountries] = useState<
     Array<{
@@ -61,6 +63,11 @@ export default function CountriesList({
       return Math.min(prev, totalPages);
     });
   }, [countries]);
+
+  useEffect(() => {
+    if (resetSignal === undefined) return;
+    setCurrentPage(1);
+  }, [resetSignal]);
 
   useEffect(() => {
     const el = containerRef.current;
