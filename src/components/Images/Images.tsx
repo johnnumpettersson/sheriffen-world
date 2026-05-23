@@ -43,10 +43,7 @@ export default function Images({
           aria: "Bilder",
           previous: "Forra sidan",
           next: "Nasta sidan",
-          pageSizeLabel: "Poster per sida",
           goToPage: (target: number) => `Gå till sida ${target}`,
-          pageSummary: (current: number, total: number, count: number) =>
-            `Sida ${current}/${total} • ${count} poster • ${pageSize}/sida`,
         }
       : {
           empty: "No images yet - upload some above!",
@@ -54,10 +51,7 @@ export default function Images({
           aria: "Images",
           previous: "Previous page",
           next: "Next page",
-          pageSizeLabel: "Items per page",
           goToPage: (target: number) => `Go to page ${target}`,
-          pageSummary: (current: number, total: number, count: number) =>
-            `Page ${current}/${total} • ${count} items • ${pageSize}/page`,
         };
 
   const hasImages = totalItems > 0;
