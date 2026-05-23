@@ -4,12 +4,12 @@ import {
   Badge,
   Box,
   Button,
-  Chip,
   DialogActions,
   Dialog,
   DialogContent,
   DialogTitle,
   IconButton,
+  InputAdornment,
   Stack,
   Tab,
   TextField,
@@ -18,6 +18,8 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { GB, SE } from "country-flag-icons/react/3x2";
 import * as Flags from "country-flag-icons/react/3x2";
 import { useTheme } from "@mui/material/styles";
@@ -116,20 +118,21 @@ const appText = {
     delete: "Delete",
     switchToEnglish: "Switch to English",
     switchToSwedish: "Switch to Swedish",
+    createdBy: "Created by",
   },
   sv: {
     subtitle: "Ladda upp bilder och se dem pa världskartan",
     uploadLoginActive: "Inloggad för uppladdning",
     logout: "Logga ut",
-    loginToUpload: "Logga in for att ladda upp",
+    loginToUpload: "Logga in",
     imagesLabel: (count: number) => `${count} bild${count !== 1 ? "er" : ""}`,
     withGpsLabel: (count: number) => `${count} med GPS-position`,
     selectedLabel: (name: string) => `Vald: ${name}`,
     worldMapTab: (count: number) => `Världskarta${count ? ` (${count})` : ""}`,
     galleryTab: (count: number) => `Bilder (${count})`,
-    uploadLoginTitle: "Inloggning for uppladdning",
-    username: "Anvandarnamn",
-    password: "Losenord",
+    uploadLoginTitle: "Inloggning för uppladdning",
+    username: "Användarnamn",
+    password: "Lösenord",
     invalidCredentials: "Fel anvandarnamn eller losenord.",
     loginServiceDown: "Kunde inte na inloggningstjansten. Forsok igen.",
     loginRequiredUpload: "Logga in for att ladda upp bilder.",
@@ -164,6 +167,7 @@ const appText = {
     delete: "Ta bort",
     switchToEnglish: "Byt till engelska",
     switchToSwedish: "Byt till svenska",
+    createdBy: "Skapad av",
   },
 };
 
@@ -189,7 +193,6 @@ export default function App() {
     galleryTotalPages,
     isGalleryLoading,
     selectedId,
-    selectedImage,
     setSelectedId,
     setGalleryPage,
     setGalleryPageSize,
@@ -220,6 +223,7 @@ export default function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [username, setUsername] = useState("sheriffen");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [metadataCandidateId, setMetadataCandidateId] = useState<string | null>(
@@ -836,128 +840,57 @@ export default function App() {
       }
     >
       <main className={styles.main}>
-        <div className={styles.miniHeader}>
-          <div className={styles.langToggleGroup}>
-            <IconButton
-              onClick={() => setLocale("sv")}
-              aria-label={t.switchToSwedish}
-              title={t.switchToSwedish}
-              className={`${styles.langToggle} ${locale === "sv" ? styles.langToggleActive : ""}`}
-            >
-              <SE className={styles.langFlag} title="Svenska" />
-            </IconButton>
-            <IconButton
-              onClick={() => setLocale("en")}
-              aria-label={t.switchToEnglish}
-              title={t.switchToEnglish}
-              className={`${styles.langToggle} ${locale === "en" ? styles.langToggleActive : ""}`}
-            >
-              <GB className={styles.langFlag} title="English" />
-            </IconButton>
-          </div>
-          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
-            <Chip
-              color="primary"
-              variant="outlined"
-              size="small"
-              label={t.imagesLabel(images.length)}
-            />
-            <Chip
-              color="secondary"
-              variant="outlined"
-              size="small"
-              label={t.withGpsLabel(imagesWithLocation.length)}
-            />
-            {selectedImage && (
-              <Chip
-                color="default"
-                size="small"
-                label={t.selectedLabel(selectedImage.name)}
-              />
-            )}
-          </Stack>
+        <div className={styles.heroBanner}>
+          <img src="/sheriffen.png" alt="Sheriffen" className={styles.heroImage} />
+          <h1 className={styles.heroTitle}>Sheriffen</h1>
         </div>
-
-        <div className={styles.twoColumnLayout}>
-          <aside className={styles.leftSidebar}>
-            <img
-              src="/sheriffen.jpg"
-              alt="Sheriffen World"
-              className={styles.sidebarLogo}
-            />
-            <CountriesList
-              images={images}
-              onSelectLocation={handleSelectSidebarLocation}
-              locale={locale}
-            />
-            <div className={styles.uploadSection}>
-              <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                {authToken ? (
-                  <>
-                    <Chip
-                      color="success"
-                      label={t.uploadLoginActive}
-                      size="small"
-                    />
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={handleLogout}
-                    >
-                      {t.logout}
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => {
-                      setAuthError(null);
-                      setIsLoginOpen(true);
-                    }}
+        <div className={styles.centerColumn}>
+          <div className={styles.tabBar}>
+            <Tabs
+              value={activeTab}
+              onChange={(_, value: Tab) => {
+                setActiveTab(value);
+                if (value === "gallery") {
+                  setNewUploadCount(0);
+                }
+              }}
+              aria-label="Gallery and map view tabs"
+            >
+              <Tab value="map" label={t.worldMapTab(imagesWithLocation.length)} />
+              <Tab
+                value="gallery"
+                label={
+                  <Badge
+                    color="error"
+                    variant="dot"
+                    invisible={!hasUnseenUploads}
                   >
-                    {t.loginToUpload}
-                  </Button>
-                )}
-              </Stack>
-              <ImageUpload
-                onFilesSelected={handleFilesSelected}
-                isProcessing={isUploading}
-                isAuthenticated={Boolean(authToken)}
-                onRequireLogin={() => setIsLoginOpen(true)}
-                uploadProgress={uploadProgress}
-                locale={locale}
+                    <span>{t.galleryTab(images.length)}</span>
+                  </Badge>
+                }
               />
+            </Tabs>
+            <div className={styles.tabBarControls}>
+              <div className={styles.langToggleGroup}>
+                <IconButton
+                  onClick={() => setLocale("sv")}
+                  aria-label={t.switchToSwedish}
+                  title={t.switchToSwedish}
+                  className={`${styles.langToggle} ${locale === "sv" ? styles.langToggleActive : ""}`}
+                >
+                  <SE className={styles.langFlag} title="Svenska" />
+                </IconButton>
+                <IconButton
+                  onClick={() => setLocale("en")}
+                  aria-label={t.switchToEnglish}
+                  title={t.switchToEnglish}
+                  className={`${styles.langToggle} ${locale === "en" ? styles.langToggleActive : ""}`}
+                >
+                  <GB className={styles.langFlag} title="English" />
+                </IconButton>
+              </div>
             </div>
-          </aside>
-
-          <div className={styles.centerColumn}>
-            <nav className={styles.tabs} aria-label="View switcher">
-              <Tabs
-                value={activeTab}
-                onChange={(_, value: Tab) => {
-                  setActiveTab(value);
-                  if (value === "gallery") {
-                    setNewUploadCount(0);
-                  }
-                }}
-                aria-label="Gallery and map view tabs"
-              >
-                <Tab value="map" label={t.worldMapTab(imagesWithLocation.length)} />
-                <Tab
-                  value="gallery"
-                  label={
-                    <Badge
-                      color="error"
-                      variant="dot"
-                      invisible={!hasUnseenUploads}
-                    >
-                      <span>{t.galleryTab(images.length)}</span>
-                    </Badge>
-                  }
-                />
-              </Tabs>
-            </nav>
+          </div>
             <div className={styles.content}>
               {activeTab === "gallery" ? (
                 <Images
@@ -965,10 +898,8 @@ export default function App() {
                   page={galleryPage}
                   totalPages={galleryTotalPages}
                   totalItems={galleryTotalItems}
-                  pageSize={galleryPageSize}
                   isLoading={isGalleryLoading}
                   onPageChange={setGalleryPage}
-                  onPageSizeChange={setGalleryPageSize}
                   selectedId={selectedId}
                   onSelect={(id) => {
                     const nextId = id === selectedId ? null : id;
@@ -1000,11 +931,35 @@ export default function App() {
                 </div>
               )}
             </div>
+            {activeTab === "map" && (
+              <div className={styles.carouselWrapper}>
+                <CountriesList
+                  images={images}
+                  onSelectLocation={handleSelectSidebarLocation}
+                  locale={locale}
+                />
+              </div>
+            )}
           </div>
+        <div className={styles.uploadArea}>
+          <ImageUpload
+            onFilesSelected={handleFilesSelected}
+            isProcessing={isUploading}
+            isAuthenticated={Boolean(authToken)}
+            onRequireLogin={() => { setAuthError(null); setIsLoginOpen(true); }}
+            onLogout={handleLogout}
+            uploadProgress={uploadProgress}
+            locale={locale}
+          />
         </div>
       </main>
 
-      <footer className={styles.footer}></footer>
+      <footer className={styles.footer}>
+        <span>{t.createdBy} </span>
+        <span className={styles.footerCreator}>John</span>
+        <span> &amp; </span>
+        <span className={styles.footerCreator}>Jade</span>
+      </footer>
 
       <Dialog
         open={previewImage !== null}
@@ -1324,6 +1279,19 @@ export default function App() {
         }}
         maxWidth="xs"
         fullWidth
+        sx={{
+          "& .MuiDialog-container": {
+            alignItems: "center",
+            justifyContent: "center",
+          },
+          "& .MuiDialog-paper": {
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            m: 0,
+          },
+        }}
       >
         <DialogTitle>{t.uploadLoginTitle}</DialogTitle>
         <DialogContent>
@@ -1338,7 +1306,7 @@ export default function App() {
             />
             <TextField
               label={t.password}
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
@@ -1348,6 +1316,22 @@ export default function App() {
                   event.preventDefault();
                   handleLoginSubmit();
                 }
+              }}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        edge="end"
+                        size="small"
+                      >
+                        {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
           </Stack>

@@ -1,9 +1,6 @@
 import React, { useRef, useState, useCallback } from "react";
 import type { Locale } from "../../i18n";
-import {
-  compressImages,
-  formatBytes as formatBytesUtil,
-} from "../../utils/compressImage";
+import { compressImages } from "../../utils/compressImage";
 import styles from "./ImageUpload.module.css";
 
 interface ImageUploadProps {
@@ -11,6 +8,7 @@ interface ImageUploadProps {
   isProcessing?: boolean;
   isAuthenticated?: boolean;
   onRequireLogin?: () => void;
+  onLogout?: () => void;
   uploadProgress?: {
     fileName: string;
     fileIndex: number;
@@ -35,6 +33,7 @@ export default function ImageUpload({
   isProcessing = false,
   isAuthenticated = false,
   onRequireLogin,
+  onLogout,
   uploadProgress = null,
   locale,
 }: ImageUploadProps) {
@@ -42,9 +41,6 @@ export default function ImageUpload({
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [compressionMessage, setCompressionMessage] = useState<string | null>(
-    null,
-  );
   const t =
     locale === "sv"
       ? {
@@ -60,7 +56,9 @@ export default function ImageUpload({
           dropPrefix: "Släpp bilder här eller",
           browse: "klicka for att välja",
           hint: `JPEG · PNG · WebP · GIF · Max ${MAX_FILE_SIZE_MB} MB · GPS upptäcks automatiskt`,
-          authHint: "Inloggning kravs!",
+          authHint: "Inloggning krävs!",
+          loginToUpload: "Logga in",
+          logout: "Logga ut",
         }
       : {
           unsupportedType: (name: string) =>
@@ -76,6 +74,8 @@ export default function ImageUpload({
           browse: "click to browse",
           hint: `JPEG · PNG · WebP · GIF · Max ${MAX_FILE_SIZE_MB} MB · GPS auto-detected`,
           authHint: "Login required!",
+          loginToUpload: "Log in to upload",
+          logout: "Log out",
         };
 
   const validate = (files: File[]): File[] => {
@@ -103,7 +103,6 @@ export default function ImageUpload({
       if (!files || files.length === 0) return;
 
       if (!isAuthenticated) {
-        setError(t.loginRequired);
         onRequireLogin?.();
         return;
       }
@@ -112,28 +111,12 @@ export default function ImageUpload({
       if (valid.length === 0) return;
 
       setIsCompressing(true);
-      setCompressionMessage(null);
       setError(null);
 
       try {
-        const { compressedFiles, results } = await compressImages(valid);
-
-        const totalOriginal = results.reduce(
-          (sum, r) => sum + r.originalSize,
-          0,
-        );
-        const totalCompressed = results.reduce(
-          (sum, r) => sum + r.compressedSize,
-          0,
-        );
-        const avgRatio = (totalCompressed / totalOriginal) * 100;
-
-        setCompressionMessage(
-          `Compressed: ${formatBytesUtil(totalOriginal)} → ${formatBytesUtil(totalCompressed)} (${avgRatio.toFixed(0)}%)`,
-        );
+        const { compressedFiles } = await compressImages(valid);
 
         onFilesSelected(compressedFiles);
-        setTimeout(() => setCompressionMessage(null), 3000);
       } catch (err) {
         console.error("Compression failed:", err);
         setError(
@@ -177,7 +160,6 @@ export default function ImageUpload({
         onClick={() => {
           if (isProcessing || isCompressing) return;
           if (!isAuthenticated) {
-            setError(t.loginRequired);
             onRequireLogin?.();
             return;
           }
@@ -201,55 +183,49 @@ export default function ImageUpload({
           onChange={onInputChange}
           aria-hidden="true"
         />
-        {isProcessing || isCompressing ? (
-          <>
-            <span className={styles.processingText}>
-              {isCompressing ? "Compressing images..." : t.processing}
-            </span>
-            {uploadProgress ? (
-              <>
-                <p className={styles.progressFile}>
-                  {t.processingFile(
-                    uploadProgress.fileIndex + 1,
-                    uploadProgress.totalFiles,
-                    uploadProgress.fileName,
-                  )}
-                </p>
-                <div className={styles.progressBarTrack}>
-                  <span
-                    className={styles.progressBarFill}
-                    style={{ width: `${progressPercent.toFixed(1)}%` }}
-                  />
-                </div>
-                <p className={styles.progressStats}>
-                  {`${formatBytes(uploadedBytes)} / ${formatBytes(totalBytes)} (${Math.round(progressPercent)}%)`}
-                </p>
-              </>
-            ) : null}
-          </>
+        <svg
+          className={styles.uploadIcon}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 16V4m0 0L8 8m4-4 4 4" />
+          <path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1" />
+        </svg>
+        <p className={styles.label}>
+          {t.dropPrefix} <strong>{t.browse}</strong>
+        </p>
+        <p className={styles.hint}>{t.hint}</p>
+        {(isProcessing || isCompressing) && (
+          <div className={styles.progressBarTrack}>
+            <span
+              className={styles.progressBarFill}
+              style={{ width: `${progressPercent.toFixed(1)}%` }}
+            />
+          </div>
+        )}
+      </div>
+      <div className={styles.authRow}>
+        {isAuthenticated ? (
+          <button
+            type="button"
+            className={`${styles.belowBoxBtn} ${styles.belowBoxBtnLoggedIn}`}
+            onClick={onLogout}
+          >
+            ✓ {t.logout}
+          </button>
         ) : (
-          <>
-            <svg
-              className={styles.uploadIcon}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 16V4m0 0L8 8m4-4 4 4" />
-              <path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1" />
-            </svg>
-            <p className={styles.label}>
-              {t.dropPrefix} <strong>{t.browse}</strong>
-            </p>
-            <p className={styles.hint}>{t.hint}</p>
-            {!isAuthenticated && (
-              <p className={styles.authHint}>{t.authHint}</p>
-            )}
-          </>
+          <button
+            type="button"
+            className={`${styles.belowBoxBtn} ${styles.belowBoxBtnLogin}`}
+            onClick={onRequireLogin}
+          >
+            → {t.loginToUpload}
+          </button>
         )}
       </div>
       {error && (
@@ -257,27 +233,7 @@ export default function ImageUpload({
           {error}
         </p>
       )}
-      {compressionMessage && (
-        <p className={styles.info} role="status">
-          {compressionMessage}
-        </p>
-      )}
     </div>
   );
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-
-  if (bytes < 1024 * 1024 * 1024) {
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}

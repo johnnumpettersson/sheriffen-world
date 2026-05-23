@@ -9,10 +9,8 @@ interface ImagesProps {
   page: number;
   totalPages: number;
   totalItems: number;
-  pageSize: number;
   isLoading: boolean;
   onPageChange: (page: number) => void;
-  onPageSizeChange: (pageSize: number) => void;
   selectedId: string | null;
   unpreviewedImageIds: Set<string>;
   recentlyPreviewedImageIds: Set<string>;
@@ -27,10 +25,8 @@ export default function Images({
   page,
   totalPages,
   totalItems,
-  pageSize,
   isLoading,
   onPageChange,
-  onPageSizeChange,
   selectedId,
   unpreviewedImageIds,
   recentlyPreviewedImageIds,
@@ -147,25 +143,7 @@ export default function Images({
           </button>
         </div>
 
-        <label className={styles.pageSizeControl}>
-          {t.pageSizeLabel}
-          <select
-            className={styles.pageSizeSelect}
-            value={String(pageSize)}
-            onChange={(event) => {
-              onPageSizeChange(Number(event.target.value));
-            }}
-            disabled={isLoading}
-          >
-            <option value="20">20</option>
-            <option value="40">40</option>
-            <option value="80">80</option>
-          </select>
-        </label>
       </div>
-      <p className={styles.pageSummary}>
-        {t.pageSummary(page, totalPages, totalItems)}
-      </p>
     </section>
   );
 }
