@@ -292,8 +292,10 @@ async function embedRecordMetadata(sourceBuffer, record) {
   }
 
   try {
-    // Convert to JPEG so EXIF embedding is universally supported
+    // Convert to JPEG. .rotate() with no args applies the EXIF orientation
+    // so the pixels are physically correct and no Orientation tag is needed.
     const jpegBuffer = await sharp(sourceBuffer)
+      .rotate()
       .jpeg({ quality: 92 })
       .toBuffer();
 
