@@ -1288,7 +1288,7 @@ app.post(
   },
 );
 
-app.delete("/api/images/:id", async (req, res, next) => {
+app.delete("/api/images/:id", requireUploadAuth, async (req, res, next) => {
   try {
     const records = await readManifest();
     const index = records.findIndex((item) => item.id === req.params.id);

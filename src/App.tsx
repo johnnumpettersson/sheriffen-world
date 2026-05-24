@@ -482,6 +482,13 @@ export default function App() {
       return;
     }
 
+    if (!authToken) {
+      setDeleteCandidateId(null);
+      setAuthError(t.loginRequiredMetadataEdit);
+      setIsLoginOpen(true);
+      return;
+    }
+
     if (previewImageId === deleteCandidate.id) {
       setPreviewImageId(null);
     }
@@ -510,7 +517,7 @@ export default function App() {
       previewedBadgeTimeoutsRef.current.delete(deleteCandidate.id);
     }
 
-    removeImage(deleteCandidate.id);
+    removeImage(deleteCandidate.id, authToken);
     setDeleteCandidateId(null);
   };
 
@@ -922,6 +929,7 @@ export default function App() {
                   onEditMetadata={handleOpenMetadataEditor}
                   unpreviewedImageIds={unpreviewedImageIds}
                   recentlyPreviewedImageIds={recentlyPreviewedImageIds}
+                  isAuthenticated={Boolean(authToken)}
                   locale={locale}
                 />
               ) : (

@@ -17,6 +17,7 @@ interface ImagesProps {
   onSelect: (id: string) => void;
   onRemove: (id: string) => void;
   onEditMetadata: (id: string) => void;
+  isAuthenticated?: boolean;
   locale: Locale;
 }
 
@@ -33,6 +34,7 @@ export default function Images({
   onSelect,
   onRemove,
   onEditMetadata,
+  isAuthenticated = false,
   locale,
 }: ImagesProps) {
   const t =
@@ -88,6 +90,7 @@ export default function Images({
             onSelect={onSelect}
             onRemove={onRemove}
             onEditMetadata={onEditMetadata}
+            isAuthenticated={isAuthenticated}
             locale={locale}
           />
         ))}

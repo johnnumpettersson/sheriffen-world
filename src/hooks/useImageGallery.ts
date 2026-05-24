@@ -282,14 +282,14 @@ export function useImageGallery() {
   );
 
   const removeImage = useCallback(
-    (id: string) => {
+    (id: string, authToken?: string) => {
       // Optimistically remove from local state for immediate UI feedback.
       setImages((prev) => prev.filter((img) => img.id !== id));
       setSelectedId((prev) => (prev === id ? null : prev));
 
       // Await the server delete before refreshing so the image is actually
       // gone when the paginated list is re-fetched.
-      deleteImageFromServer(id)
+      deleteImageFromServer(id, authToken)
         .then(() => refreshGalleryPage(galleryPage, galleryPageSize))
         .catch(() => {
           // On failure, re-sync from server to restore accurate state.
@@ -817,10 +817,15 @@ function wait(ms: number): Promise<void> {
   });
 }
 
-async function deleteImageFromServer(id: string): Promise<void> {
-  await fetch(`${API_BASE_URL}/api/images/${id}`, {
+async function deleteImageFromServer(id: string, authToken?: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/images/${id}`, {
     method: "DELETE",
+    headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
   });
+
+  if (response.status === 401) {
+    throw new Error("Unauthorized upload request");
+  }
 }
 
 async function updateImageMetadataOnServer(

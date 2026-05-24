@@ -11,6 +11,7 @@ interface ImageCardProps {
   onSelect: (id: string) => void;
   onRemove: (id: string) => void;
   onEditMetadata: (id: string) => void;
+  isAuthenticated?: boolean;
   locale: Locale;
 }
 
@@ -28,6 +29,7 @@ export default function ImageCard({
   onSelect,
   onRemove,
   onEditMetadata,
+  isAuthenticated = false,
   locale,
 }: ImageCardProps) {
   const t =
@@ -133,28 +135,32 @@ export default function ImageCard({
           </p>
         )}
       </div>
-      <button
-        className={styles.editBtn}
-        onClick={(e) => {
-          e.stopPropagation();
-          onEditMetadata(image.id);
-        }}
-        aria-label={t.editImage(image.name)}
-        title={t.editMetadata}
-      >
-        ✎
-      </button>
-      <button
-        className={styles.removeBtn}
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove(image.id);
-        }}
-        aria-label={t.removeImage(image.name)}
-        title={t.removeTitle}
-      >
-        ✕
-      </button>
+      {isAuthenticated && (
+        <>
+          <button
+            className={styles.editBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditMetadata(image.id);
+            }}
+            aria-label={t.editImage(image.name)}
+            title={t.editMetadata}
+          >
+            ✎
+          </button>
+          <button
+            className={styles.removeBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(image.id);
+            }}
+            aria-label={t.removeImage(image.name)}
+            title={t.removeTitle}
+          >
+            ✕
+          </button>
+        </>
+      )}
     </article>
   );
 }
