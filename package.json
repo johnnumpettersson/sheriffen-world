@@ -23,6 +23,7 @@
     "minio": "^8.0.7",
     "multer": "^2.1.1",
     "pica": "^9.0.1",
+    "piexifjs": "^1.0.6",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-leaflet": "^5.0.0",

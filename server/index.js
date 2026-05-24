@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import piexif from "piexifjs";
 import multer from "multer";
 import { Client as MinioClient } from "minio";
 import sanitize from "sanitize-filename";
@@ -263,13 +264,13 @@ async function pipeObjectToResponse(res, objectKey, contentType) {
   objectStream.pipe(res);
 }
 
-function decimalToExifGPS(decimal) {
+function decimalToGPSRational(decimal) {
   const abs = Math.abs(decimal);
   const degrees = Math.floor(abs);
   const minutesDecimal = (abs - degrees) * 60;
   const minutes = Math.floor(minutesDecimal);
   const secondsRaw = Math.round((minutesDecimal - minutes) * 60 * 1000);
-  return `${degrees}/1 ${minutes}/1 ${secondsRaw}/1000`;
+  return [[degrees, 1], [minutes, 1], [secondsRaw, 1000]];
 }
 
 function formatExifDate(isoString) {
@@ -282,34 +283,53 @@ function formatExifDate(isoString) {
 }
 
 async function embedRecordMetadata(sourceBuffer, record) {
-  const exifToEmbed = {};
+  const hasGPS =
+    record.location?.lat != null && record.location?.lng != null;
+  const hasDate = record.takenAt != null;
 
-  if (record.location?.lat != null && record.location?.lng != null) {
-    const { lat, lng } = record.location;
-    exifToEmbed.GPS = {
-      GPSLatitudeRef: lat >= 0 ? "N" : "S",
-      GPSLatitude: decimalToExifGPS(lat),
-      GPSLongitudeRef: lng >= 0 ? "E" : "W",
-      GPSLongitude: decimalToExifGPS(lng),
-    };
-  }
-
-  if (record.takenAt) {
-    exifToEmbed.Exif = {
-      DateTimeOriginal: formatExifDate(record.takenAt),
-    };
-  }
-
-  if (Object.keys(exifToEmbed).length === 0) {
-    return sourceBuffer;
+  if (!hasGPS && !hasDate) {
+    return { buffer: sourceBuffer, contentType: null };
   }
 
   try {
-    return await sharp(sourceBuffer)
-      .withMetadata({ exif: exifToEmbed })
+    // Convert to JPEG so EXIF embedding is universally supported
+    const jpegBuffer = await sharp(sourceBuffer)
+      .jpeg({ quality: 92 })
       .toBuffer();
-  } catch {
-    return sourceBuffer;
+
+    const binaryStr = jpegBuffer.toString("binary");
+    let exifObj;
+    try {
+      exifObj = piexif.load(binaryStr);
+    } catch {
+      exifObj = { "0th": {}, Exif: {}, GPS: {}, "1st": {} };
+    }
+
+    if (hasGPS) {
+      const { lat, lng } = record.location;
+      exifObj.GPS[piexif.GPSIFD.GPSLatitudeRef] = lat >= 0 ? "N" : "S";
+      exifObj.GPS[piexif.GPSIFD.GPSLatitude] = decimalToGPSRational(lat);
+      exifObj.GPS[piexif.GPSIFD.GPSLongitudeRef] = lng >= 0 ? "E" : "W";
+      exifObj.GPS[piexif.GPSIFD.GPSLongitude] = decimalToGPSRational(lng);
+    }
+
+    if (hasDate) {
+      exifObj.Exif[piexif.ExifIFD.DateTimeOriginal] = formatExifDate(
+        record.takenAt,
+      );
+    }
+
+    const exifBytes = piexif.dump(exifObj);
+    const newBinaryStr = piexif.insert(exifBytes, binaryStr);
+    const buffer = Buffer.from(newBinaryStr, "binary");
+
+    return { buffer, contentType: "image/jpeg" };
+  } catch (err) {
+    console.warn(
+      "[api] embedRecordMetadata failed:",
+      err instanceof Error ? err.message : String(err),
+    );
+    return { buffer: sourceBuffer, contentType: null };
   }
 }
 
@@ -1113,8 +1133,10 @@ app.get("/api/images/:id/file", async (req, res, next) => {
 
     const objectStream = await minio.getObject(BUCKET, record.objectKey);
     const sourceBuffer = await streamToBuffer(objectStream);
-    const outputBuffer = await embedRecordMetadata(sourceBuffer, record);
-    const contentType = record.type || "application/octet-stream";
+    const { buffer: outputBuffer, contentType: embeddedType } =
+      await embedRecordMetadata(sourceBuffer, record);
+    const contentType =
+      embeddedType || record.type || "application/octet-stream";
 
     res.setHeader("Content-Type", contentType);
     res.setHeader("Cache-Control", "public, max-age=3600");
