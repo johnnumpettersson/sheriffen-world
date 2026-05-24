@@ -213,4 +213,8 @@
     aspect-ratio: 64 / 63;
     min-height: 490px;
   }
+
+  .uploadArea {
+    margin-top: 0.5rem;
+  }
 }
