@@ -1706,62 +1706,63 @@ export async function extractCountriesFromImages(
     sortTimestamp: number;
   }
 
-  const countryItems: CountryItem[] = [];
+  const countryItems = await Promise.all(
+    imagesWithLocation.map(async (img): Promise<CountryItem | null> => {
+      if (!img.location) return null;
 
-  for (const img of imagesWithLocation) {
-    if (!img.location) continue;
+      const resolvedLocation = await resolveWesternLocationNames(
+        img.location.lat,
+        img.location.lng,
+      );
 
-    const resolvedLocation = await resolveWesternLocationNames(
-      img.location.lat,
-      img.location.lng,
-    );
+      const fallbackLocation = getLocationFromCoords(
+        img.location.lat,
+        img.location.lng,
+      );
 
-    const fallbackLocation = getLocationFromCoords(
-      img.location.lat,
-      img.location.lng,
-    );
+      const countryCode =
+        resolvedLocation.countryCode ??
+        img.location.countryCode ??
+        fallbackLocation.countryCode;
 
-    const countryCode =
-      resolvedLocation.countryCode ??
-      img.location.countryCode ??
-      fallbackLocation.countryCode;
+      const countryName = normalizeCountryName(
+        resolvedLocation.country ??
+          img.location.country ??
+          fallbackLocation.country,
+        countryCode,
+      );
 
-    const countryName = normalizeCountryName(
-      resolvedLocation.country ??
-        img.location.country ??
-        fallbackLocation.country,
-      countryCode,
-    );
+      const location = {
+        country: countryName,
+        countryCode,
+        continent:
+          resolvedLocation.continent ??
+          img.location.continent ??
+          fallbackLocation.continent,
+        city:
+          resolvedLocation.city ?? img.location.city ?? fallbackLocation.city,
+        landmark:
+          resolvedLocation.landmark ??
+          img.location.landmark ??
+          fallbackLocation.landmark,
+      };
 
-    const location = {
-      country: countryName,
-      countryCode,
-      continent:
-        resolvedLocation.continent ??
-        img.location.continent ??
-        fallbackLocation.continent,
-      city: resolvedLocation.city ?? img.location.city ?? fallbackLocation.city,
-      landmark:
-        resolvedLocation.landmark ??
-        img.location.landmark ??
-        fallbackLocation.landmark,
-    };
-    const imageTimestamp = (img.takenAt ?? img.uploadedAt).getTime();
-
-    countryItems.push({
-      name: location.country,
-      code: location.countryCode,
-      continent: location.continent,
-      city: location.city,
-      site: location.landmark,
-      imageId: img.id,
-      date: (img.takenAt ?? img.uploadedAt).toISOString(),
-      count: 1,
-      sortTimestamp: imageTimestamp,
-    });
-  }
+      return {
+        name: location.country,
+        code: location.countryCode,
+        continent: location.continent,
+        city: location.city,
+        site: location.landmark,
+        imageId: img.id,
+        date: (img.takenAt ?? img.uploadedAt).toISOString(),
+        count: 1,
+        sortTimestamp: (img.takenAt ?? img.uploadedAt).getTime(),
+      };
+    }),
+  );
 
   return countryItems
+    .filter((item): item is CountryItem => item !== null)
     .sort((a, b) => b.sortTimestamp - a.sortTimestamp)
     .map(({ sortTimestamp: _sortTimestamp, ...country }) => country);
 }
