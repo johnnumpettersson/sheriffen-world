@@ -121,6 +121,7 @@ function ResetWorldViewControl({
         L.DomEvent.on(button, "click", (event) => {
           L.DomEvent.preventDefault(event);
           map.flyTo(WORLD_CENTER, WORLD_ZOOM, { duration: 1 });
+          map.closePopup();
           onResetRef.current?.();
         });
 
