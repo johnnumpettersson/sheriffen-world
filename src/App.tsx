@@ -447,11 +447,13 @@ export default function App() {
 
   const sortedImages = useMemo(
     () =>
-      [...images].sort(
-        (a, b) =>
-          (b.takenAt ?? b.uploadedAt).getTime() -
-          (a.takenAt ?? a.uploadedAt).getTime(),
-      ),
+      [...images].sort((a, b) => {
+        if (!a.takenAt && !b.takenAt)
+          return b.uploadedAt.getTime() - a.uploadedAt.getTime();
+        if (!a.takenAt) return 1;
+        if (!b.takenAt) return -1;
+        return b.takenAt.getTime() - a.takenAt.getTime();
+      }),
     [images],
   );
 

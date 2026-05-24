@@ -59,9 +59,11 @@ export default function Images({
 
   const sortedImages = useMemo(() => {
     return [...images].sort((a, b) => {
-      const timeA = (a.takenAt ?? a.uploadedAt).getTime();
-      const timeB = (b.takenAt ?? b.uploadedAt).getTime();
-      return timeB - timeA;
+      if (!a.takenAt && !b.takenAt)
+        return b.uploadedAt.getTime() - a.uploadedAt.getTime();
+      if (!a.takenAt) return 1;
+      if (!b.takenAt) return -1;
+      return b.takenAt.getTime() - a.takenAt.getTime();
     });
   }, [images]);
 
