@@ -18,17 +18,17 @@ import os from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
 
-const MINIO_RETRY_MAX_ATTEMPTS = Number(
-  process.env.MINIO_RETRY_MAX_ATTEMPTS ?? 10,
+const STORAGE_RETRY_MAX_ATTEMPTS = Number(
+  process.env.STORAGE_RETRY_MAX_ATTEMPTS ?? 10,
 );
-const MINIO_RETRY_INITIAL_DELAY = Number(
-  process.env.MINIO_RETRY_INITIAL_DELAY ?? 1000,
+const STORAGE_RETRY_INITIAL_DELAY = Number(
+  process.env.STORAGE_RETRY_INITIAL_DELAY ?? 1000,
 );
-const MINIO_STARTUP_BLOCKING =
-  (process.env.MINIO_STARTUP_BLOCKING ?? "false") === "true";
+const STORAGE_STARTUP_BLOCKING =
+  (process.env.STORAGE_STARTUP_BLOCKING ?? "false") === "true";
 
 const PORT = Number(process.env.PORT ?? 8080);
-const BUCKET = process.env.MINIO_BUCKET ?? "gallery-images";
+const BUCKET = process.env.R2_BUCKET ?? "gallery-images";
 const NOMINATIM_URL =
   process.env.NOMINATIM_URL ??
   "https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&namedetails=1&zoom=18";
@@ -46,11 +46,10 @@ const UPLOAD_AUTH_SECRET =
   randomBytes(32).toString("hex");
 
 const minio = new MinioClient({
-  endPoint: process.env.MINIO_ENDPOINT ?? "minio",
-  port: Number(process.env.MINIO_PORT ?? 9000),
-  useSSL: (process.env.MINIO_USE_SSL ?? "false") === "true",
-  accessKey: process.env.MINIO_ACCESS_KEY ?? "minioadmin",
-  secretKey: process.env.MINIO_SECRET_KEY ?? "minioadmin",
+  endPoint: `${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  useSSL: true,
+  accessKey: process.env.R2_ACCESS_KEY_ID ?? "",
+  secretKey: process.env.R2_SECRET_ACCESS_KEY ?? "",
 });
 
 const app = express();
@@ -131,15 +130,15 @@ async function ensureBucket() {
 }
 
 async function ensureBucketWithRetry(
-  maxAttempts = MINIO_RETRY_MAX_ATTEMPTS,
-  initialDelayMs = MINIO_RETRY_INITIAL_DELAY,
+  maxAttempts = STORAGE_RETRY_MAX_ATTEMPTS,
+  initialDelayMs = STORAGE_RETRY_INITIAL_DELAY,
 ) {
   let lastError;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       await ensureBucket();
-      console.log("[api] MinIO connection established");
+      console.log("[api] R2 connection established");
       return;
     } catch (error) {
       lastError = error;
@@ -147,7 +146,7 @@ async function ensureBucketWithRetry(
       if (attempt < maxAttempts) {
         const delayMs = initialDelayMs * Math.pow(2, attempt - 1);
         console.warn(
-          `[api] MinIO connection failed (attempt ${attempt}/${maxAttempts}), retrying in ${delayMs}ms...`,
+          `[api] R2 connection failed (attempt ${attempt}/${maxAttempts}), retrying in ${delayMs}ms...`,
           error instanceof Error ? error.message : String(error),
         );
 
@@ -157,7 +156,7 @@ async function ensureBucketWithRetry(
   }
 
   throw new Error(
-    `[api] Failed to connect to MinIO after ${maxAttempts} attempts: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+    `[api] Failed to connect to R2 after ${maxAttempts} attempts: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
   );
 }
 
@@ -1420,7 +1419,7 @@ if (fs.existsSync(distDir)) {
 }
 
 async function start() {
-  if (MINIO_STARTUP_BLOCKING) {
+  if (STORAGE_STARTUP_BLOCKING) {
     await ensureBucketWithRetry();
   } else {
     ensureBucketWithRetry().catch((error) => {
