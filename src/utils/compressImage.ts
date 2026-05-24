@@ -1,15 +1,39 @@
+import exifr from "exifr";
+
 const MAX_DIMENSION = 3200;
 const WEBP_QUALITY = 0.85;
+
+export interface ImageExif {
+  latitude: number | null;
+  longitude: number | null;
+  DateTimeOriginal: Date | null;
+}
 
 interface CompressionResult {
   file: File;
   originalSize: number;
   compressedSize: number;
   compressionRatio: number;
+  exif: ImageExif | null;
 }
 
 export async function compressImage(file: File): Promise<CompressionResult> {
   const originalSize = file.size;
+
+  // Extract EXIF from the original file before canvas strips it.
+  let exif: ImageExif | null = null;
+  try {
+    const parsed = await exifr.parse(file, { gps: true, tiff: true });
+    if (parsed) {
+      exif = {
+        latitude: parsed.latitude ?? null,
+        longitude: parsed.longitude ?? null,
+        DateTimeOriginal: parsed.DateTimeOriginal ?? null,
+      };
+    }
+  } catch {
+    // EXIF parsing is best-effort
+  }
 
   try {
     // createImageBitmap decodes the file once and correctly applies EXIF
@@ -29,6 +53,7 @@ export async function compressImage(file: File): Promise<CompressionResult> {
         originalSize,
         compressedSize: originalSize,
         compressionRatio: 1,
+        exif,
       };
     }
 
@@ -70,6 +95,7 @@ export async function compressImage(file: File): Promise<CompressionResult> {
             originalSize,
             compressedSize: blob.size,
             compressionRatio: blob.size / originalSize,
+            exif,
           });
         },
         "image/webp",
@@ -83,6 +109,7 @@ export async function compressImage(file: File): Promise<CompressionResult> {
       originalSize,
       compressedSize: originalSize,
       compressionRatio: 1,
+      exif,
     };
   }
 }

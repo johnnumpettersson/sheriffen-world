@@ -1,10 +1,11 @@
 import React, { useRef, useState, useCallback } from "react";
 import type { Locale } from "../../i18n";
 import { compressImages } from "../../utils/compressImage";
+import type { ImageExif } from "../../utils/compressImage";
 import styles from "./ImageUpload.module.css";
 
 interface ImageUploadProps {
-  onFilesSelected: (files: File[]) => void;
+  onFilesSelected: (files: File[], exifDataList: (ImageExif | null)[]) => void;
   isProcessing?: boolean;
   isAuthenticated?: boolean;
   onRequireLogin?: () => void;
@@ -114,9 +115,9 @@ export default function ImageUpload({
       setError(null);
 
       try {
-        const { compressedFiles } = await compressImages(valid);
+        const { compressedFiles, results } = await compressImages(valid);
 
-        onFilesSelected(compressedFiles);
+        onFilesSelected(compressedFiles, results.map((r) => r.exif));
       } catch (err) {
         console.error("Compression failed:", err);
         setError(

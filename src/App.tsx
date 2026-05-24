@@ -31,6 +31,7 @@ import MapView from "./components/MapView/MapView";
 import CountriesList from "./components/CountriesList/CountriesList";
 import type { Locale } from "./i18n";
 import type { GeoLocation } from "./types";
+import type { ImageExif } from "./utils/compressImage";
 import styles from "./App.module.css";
 
 type Tab = "gallery" | "map";
@@ -133,7 +134,7 @@ const appText = {
     uploadLoginTitle: "Inloggning för uppladdning",
     username: "Användarnamn",
     password: "Lösenord",
-    invalidCredentials: "Fel anvandarnamn eller losenord.",
+    invalidCredentials: "Fel användarnamn eller lösenord.",
     loginServiceDown: "Kunde inte na inloggningstjansten. Forsok igen.",
     loginRequiredUpload: "Logga in for att ladda upp bilder.",
     loginRequiredMetadataEdit: "Logga in for att redigera bildmetadata.",
@@ -306,7 +307,7 @@ export default function App() {
       });
   }, [authToken, validateAuthToken]);
 
-  const handleFilesSelected = async (files: File[]) => {
+  const handleFilesSelected = async (files: File[], exifDataList?: (ImageExif | null)[]) => {
     if (!authToken) {
       setAuthError(t.loginRequiredUpload);
       setIsLoginOpen(true);
@@ -322,7 +323,7 @@ export default function App() {
     setIsUploading(true);
     setUploadProgress(null);
 
-    addImages(files, authToken, handleUploadProgress)
+    addImages(files, authToken, handleUploadProgress, exifDataList)
       .then((addedImages) => {
         setUnpreviewedImageIds((prev) => {
           const next = new Set(prev);

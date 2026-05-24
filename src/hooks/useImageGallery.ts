@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import exifr from "exifr";
 import type { GalleryImage, GeoLocation } from "../types";
+import type { ImageExif } from "../utils/compressImage";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(
   /\/$/,
@@ -163,6 +164,7 @@ export function useImageGallery() {
       files: File[],
       authToken?: string,
       onProgress?: (update: UploadProgressUpdate) => void,
+      preExtractedExifList?: (ImageExif | null)[],
     ) => {
       const newImages: GalleryImage[] = [];
       const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
@@ -204,17 +206,18 @@ export function useImageGallery() {
         };
 
         try {
-          const exif = await exifr.parse(file, { gps: true, tiff: true });
+          // Use pre-extracted EXIF when provided (compression strips EXIF from canvas output).
+          // Fall back to parsing the file directly for uncompressed originals.
+          const preExtracted = preExtractedExifList?.[fileIndex];
+          const exif = preExtracted !== undefined
+            ? preExtracted
+            : await exifr.parse(file, { gps: true, tiff: true });
 
           if (import.meta.env.DEV) {
             console.log("[sheriffen-world] EXIF metadata", {
               fileName: file.name,
               exif,
-              extracted: {
-                latitude: exif?.latitude ?? null,
-                longitude: exif?.longitude ?? null,
-                dateTimeOriginal: exif?.DateTimeOriginal ?? null,
-              },
+              source: preExtracted !== undefined ? "pre-extracted" : "parsed",
             });
           }
 
