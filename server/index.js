@@ -263,6 +263,56 @@ async function pipeObjectToResponse(res, objectKey, contentType) {
   objectStream.pipe(res);
 }
 
+function decimalToExifGPS(decimal) {
+  const abs = Math.abs(decimal);
+  const degrees = Math.floor(abs);
+  const minutesDecimal = (abs - degrees) * 60;
+  const minutes = Math.floor(minutesDecimal);
+  const secondsRaw = Math.round((minutesDecimal - minutes) * 60 * 1000);
+  return `${degrees}/1 ${minutes}/1 ${secondsRaw}/1000`;
+}
+
+function formatExifDate(isoString) {
+  const d = new Date(isoString);
+  const pad = (n) => String(n).padStart(2, "0");
+  return (
+    `${d.getUTCFullYear()}:${pad(d.getUTCMonth() + 1)}:${pad(d.getUTCDate())} ` +
+    `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`
+  );
+}
+
+async function embedRecordMetadata(sourceBuffer, record) {
+  const exifToEmbed = {};
+
+  if (record.location?.lat != null && record.location?.lng != null) {
+    const { lat, lng } = record.location;
+    exifToEmbed.GPS = {
+      GPSLatitudeRef: lat >= 0 ? "N" : "S",
+      GPSLatitude: decimalToExifGPS(lat),
+      GPSLongitudeRef: lng >= 0 ? "E" : "W",
+      GPSLongitude: decimalToExifGPS(lng),
+    };
+  }
+
+  if (record.takenAt) {
+    exifToEmbed.Exif = {
+      DateTimeOriginal: formatExifDate(record.takenAt),
+    };
+  }
+
+  if (Object.keys(exifToEmbed).length === 0) {
+    return sourceBuffer;
+  }
+
+  try {
+    return await sharp(sourceBuffer)
+      .withMetadata({ exif: exifToEmbed })
+      .toBuffer();
+  } catch {
+    return sourceBuffer;
+  }
+}
+
 async function ensureImageVariant(record, variantName) {
   const variant = IMAGE_VARIANTS[variantName];
   const variantObjectKey = getImageVariantObjectKey(record, variantName);
@@ -1048,11 +1098,28 @@ app.get("/api/images/:id/file", async (req, res, next) => {
       return;
     }
 
-    await pipeObjectToResponse(
-      res,
-      record.objectKey,
-      record.type || "application/octet-stream",
-    );
+    const hasMetadata =
+      (record.location?.lat != null && record.location?.lng != null) ||
+      record.takenAt != null;
+
+    if (!hasMetadata) {
+      await pipeObjectToResponse(
+        res,
+        record.objectKey,
+        record.type || "application/octet-stream",
+      );
+      return;
+    }
+
+    const objectStream = await minio.getObject(BUCKET, record.objectKey);
+    const sourceBuffer = await streamToBuffer(objectStream);
+    const outputBuffer = await embedRecordMetadata(sourceBuffer, record);
+    const contentType = record.type || "application/octet-stream";
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("Content-Length", outputBuffer.length);
+    res.end(outputBuffer);
   } catch (error) {
     next(error);
   }
