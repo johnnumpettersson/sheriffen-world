@@ -58,13 +58,9 @@ export default function Images({
   const pageButtons = getVisiblePages(page, totalPages);
 
   const sortedImages = useMemo(() => {
-    return [...images].sort((a, b) => {
-      if (!a.takenAt && !b.takenAt)
-        return b.uploadedAt.getTime() - a.uploadedAt.getTime();
-      if (!a.takenAt) return 1;
-      if (!b.takenAt) return -1;
-      return b.takenAt.getTime() - a.takenAt.getTime();
-    });
+    return [...images].sort(
+      (a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime(),
+    );
   }, [images]);
 
   if (isLoading && images.length === 0) {
