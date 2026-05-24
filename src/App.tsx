@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Badge,
@@ -445,6 +445,16 @@ export default function App() {
     setActiveTab("map");
   };
 
+  const sortedImages = useMemo(
+    () =>
+      [...images].sort(
+        (a, b) =>
+          (b.takenAt ?? b.uploadedAt).getTime() -
+          (a.takenAt ?? a.uploadedAt).getTime(),
+      ),
+    [images],
+  );
+
   const imagesWithLocation = images.filter((img) => img.location !== null);
   const hasUnseenUploads = newUploadCount > 0 && activeTab !== "gallery";
   const deleteCandidate = deleteCandidateId
@@ -454,9 +464,9 @@ export default function App() {
     ? (images.find((img) => img.id === metadataCandidateId) ?? null)
     : null;
   const previewIndex = previewImageId
-    ? images.findIndex((img) => img.id === previewImageId)
+    ? sortedImages.findIndex((img) => img.id === previewImageId)
     : -1;
-  const previewImage = previewIndex >= 0 ? images[previewIndex] : null;
+  const previewImage = previewIndex >= 0 ? sortedImages[previewIndex] : null;
   const previewLocationKey = previewImage?.location
     ? getCoordinateCacheKey(
       previewImage.location.lat,
@@ -506,12 +516,12 @@ export default function App() {
   };
 
   const handlePreviewStep = (direction: -1 | 1) => {
-    if (images.length === 0) return;
+    if (sortedImages.length === 0) return;
 
     const currentIndex = previewIndex >= 0 ? previewIndex : 0;
     const nextIndex =
-      (currentIndex + direction + images.length) % images.length;
-    const nextId = images[nextIndex].id;
+      (currentIndex + direction + sortedImages.length) % sortedImages.length;
+    const nextId = sortedImages[nextIndex].id;
 
     setPreviewImageId(nextId);
     setSelectedId(nextId);
@@ -992,7 +1002,7 @@ export default function App() {
           <CloseIcon />
         </IconButton>
 
-        {images.length > 1 && (
+        {sortedImages.length > 1 && (
           <>
             <IconButton
               aria-label="Previous image"
@@ -1058,7 +1068,7 @@ export default function App() {
                     fontSize: "0.85rem",
                   }}
                 >
-                  {previewImage.name} ({previewIndex + 1}/{images.length})
+                  {previewImage.name} ({previewIndex + 1}/{sortedImages.length})
                 </Box>
               </Box>
 
