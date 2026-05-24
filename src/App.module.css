@@ -208,4 +208,9 @@
   .carouselWrapper {
     display: none;
   }
+
+  .mapWrapper {
+    aspect-ratio: 64 / 63;
+    min-height: 490px;
+  }
 }
