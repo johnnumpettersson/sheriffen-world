@@ -210,11 +210,11 @@
   }
 
   .mapWrapper {
-    aspect-ratio: 64 / 63;
-    min-height: 490px;
+    height: clamp(300px, 92vw, 490px);
+    min-height: 0;
   }
 
   .uploadArea {
-    margin-top: 0.5rem;
+    margin-top: 0;
   }
 }
