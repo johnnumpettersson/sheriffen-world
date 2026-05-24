@@ -54,6 +54,12 @@
   border-color: rgba(232, 93, 44, 0.4);
 }
 
+.carouselItemSelected {
+  background: rgba(232, 93, 44, 0.22) !important;
+  border-color: #e85d2c !important;
+  box-shadow: 0 0 0 1px rgba(232, 93, 44, 0.4);
+}
+
 .flagIcon {
   width: 1.12rem;
   height: auto;
@@ -94,8 +100,8 @@
 
 .yearBadge {
   font-size: 0.52rem;
-  font-weight: 400;
-  color: rgba(208, 208, 208, 0.6);
+  font-weight: 700;
+  color: #e85d2c;
   white-space: nowrap;
   flex-shrink: 0;
 }

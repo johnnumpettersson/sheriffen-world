@@ -928,7 +928,10 @@ export default function App() {
                       setPreviewImageId(id);
                       markImageAsPreviewed(id);
                     }}
-                    onResetView={() => setCarouselResetSignal((prev) => prev + 1)}
+                    onResetView={() => {
+                      setCarouselResetSignal((prev) => prev + 1);
+                      setSelectedId(null);
+                    }}
                     locale={locale}
                   />
                 </div>
@@ -941,6 +944,7 @@ export default function App() {
                   onSelectLocation={handleSelectSidebarLocation}
                   locale={locale}
                   resetSignal={carouselResetSignal}
+                  selectedId={selectedId}
                 />
               </div>
             )}

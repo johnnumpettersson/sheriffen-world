@@ -15,6 +15,7 @@ interface CountriesListProps {
   onSelectLocation: (imageId: string) => void;
   locale: Locale;
   resetSignal?: number;
+  selectedId?: string | null;
 }
 
 export default function CountriesList({
@@ -22,6 +23,7 @@ export default function CountriesList({
   onSelectLocation,
   locale,
   resetSignal,
+  selectedId,
 }: CountriesListProps) {
   const [countries, setCountries] = useState<
     Array<{
@@ -68,6 +70,13 @@ export default function CountriesList({
     if (resetSignal === undefined) return;
     setCurrentPage(1);
   }, [resetSignal]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const index = countries.findIndex((c) => c.imageId === selectedId);
+    if (index < 0) return;
+    setCurrentPage(Math.floor(index / ITEMS_PER_PAGE) + 1);
+  }, [selectedId, countries]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -130,7 +139,7 @@ export default function CountriesList({
             return (
               <button
                 key={country.imageId}
-                className={styles.carouselItem}
+                className={`${styles.carouselItem}${country.imageId === selectedId ? ` ${styles.carouselItemSelected}` : ""}`}
                 onClick={() => onSelectLocation(country.imageId)}
               >
                 <CountryFlag countryCode={country.code} />
