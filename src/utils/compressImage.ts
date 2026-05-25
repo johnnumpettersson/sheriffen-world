@@ -61,6 +61,9 @@ export async function compressImage(file: File): Promise<CompressionResult> {
       originalSize < 2 * 1024 * 1024
     ) {
       bitmap.close();
+      if (import.meta.env.DEV) {
+        console.log(`[compress] skipped ${file.name} (${width}x${height}, ${(originalSize / 1024).toFixed(0)} KB — already small)`);
+      }
       return {
         file,
         originalSize,
@@ -90,33 +93,32 @@ export async function compressImage(file: File): Promise<CompressionResult> {
     ctx.drawImage(bitmap, 0, 0, newWidth, newHeight);
     bitmap.close();
 
-    return new Promise<CompressionResult>((resolve, reject) => {
-      canvas.toBlob(
-        (blob: Blob | null) => {
-          if (!blob) {
-            reject(new Error("Failed to compress image"));
-            return;
-          }
-
-          const compressedFile = new File([blob], file.name, {
-            type: "image/webp",
-            lastModified: file.lastModified,
-          });
-
-          resolve({
-            file: compressedFile,
-            originalSize,
-            compressedSize: blob.size,
-            compressionRatio: blob.size / originalSize,
-            exif,
-          });
-        },
-        "image/webp",
-        WEBP_QUALITY,
-      );
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((b) => resolve(b), "image/webp", WEBP_QUALITY);
     });
+
+    if (!blob) {
+      throw new Error("canvas.toBlob returned null");
+    }
+
+    const compressedFile = new File([blob], file.name, {
+      type: "image/webp",
+      lastModified: file.lastModified,
+    });
+
+    if (import.meta.env.DEV) {
+      console.log(`[compress] ${file.name}: ${(originalSize / 1024).toFixed(0)} KB → ${(blob.size / 1024).toFixed(0)} KB (${(blob.size / originalSize * 100).toFixed(0)}%)`);
+    }
+
+    return {
+      file: compressedFile,
+      originalSize,
+      compressedSize: blob.size,
+      compressionRatio: blob.size / originalSize,
+      exif,
+    };
   } catch (error) {
-    console.warn("Image compression failed, using original:", error);
+    console.warn("[compress] failed, uploading original:", error);
     return {
       file,
       originalSize,
