@@ -444,24 +444,26 @@ async function generateVideoThumbnailFromSession(session, id) {
     })().catch(reject);
   });
 
-  // Try to get duration via ffprobe
+  // Get duration via ffprobe
   const duration = await new Promise((resolve) => {
     ffmpeg.ffprobe(tempVideoPath, (err, metadata) => {
       resolve(err ? null : (metadata?.format?.duration ?? null));
     });
   });
 
-  // Extract first frame at 1 second (or 0 if shorter)
+  // Seek to 10% of duration (capped at 5s) for a representative frame
+  const seekSec = duration ? Math.min(duration * 0.1, 5) : 0;
+
+  // Extract a single frame using explicit output options (more reliable than .screenshots())
   await new Promise((resolve, reject) => {
-    ffmpeg(tempVideoPath)
-      .screenshots({
-        timestamps: [Math.min(1, (duration ?? 0) * 0.1 || 0)],
-        filename: "thumb.jpg",
-        folder: session.tempDir,
-        size: "480x?",
-      })
+    ffmpeg()
+      .input(tempVideoPath)
+      .inputOptions([`-ss ${seekSec}`])
+      .outputOptions(["-vframes 1", "-q:v 2"])
+      .output(tempThumbPath)
       .on("end", resolve)
-      .on("error", reject);
+      .on("error", (err) => reject(new Error(`ffmpeg frame extract: ${err.message}`)))
+      .run();
   });
 
   const thumbBuffer = await fsp.readFile(tempThumbPath);
@@ -475,6 +477,7 @@ async function generateVideoThumbnailFromSession(session, id) {
     "Content-Type": "image/webp",
   });
 
+  console.log(`[api] video thumbnail generated for ${id} (seek=${seekSec.toFixed(1)}s, duration=${duration?.toFixed(1) ?? "unknown"}s)`);
   return { objectKey, duration };
 }
 
