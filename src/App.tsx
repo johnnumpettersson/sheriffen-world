@@ -918,6 +918,23 @@ export default function App() {
                   <GB className={styles.langFlag} title="English" />
                 </IconButton>
               </div>
+              {authToken ? (
+                <button
+                  type="button"
+                  className={`${styles.authBtn} ${styles.authBtnLoggedIn}`}
+                  onClick={handleLogout}
+                >
+                  ✓ {t.logout}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={`${styles.authBtn} ${styles.authBtnLogin}`}
+                  onClick={() => { setAuthError(null); setIsLoginOpen(true); }}
+                >
+                  → {t.loginToUpload}
+                </button>
+              )}
             </div>
           </div>
             <div className={styles.content}>
@@ -942,6 +959,17 @@ export default function App() {
                   recentlyPreviewedImageIds={recentlyPreviewedImageIds}
                   isAuthenticated={Boolean(authToken)}
                   locale={locale}
+                  uploadSlot={
+                    <ImageUpload
+                      onFilesSelected={handleFilesSelected}
+                      isProcessing={isUploading}
+                      isAuthenticated={Boolean(authToken)}
+                      onRequireLogin={() => { setAuthError(null); setIsLoginOpen(true); }}
+                      uploadProgress={uploadProgress}
+                      locale={locale}
+                      cardMode
+                    />
+                  }
                 />
               ) : (
                 <div className={styles.mapWrapper}>
@@ -977,17 +1005,6 @@ export default function App() {
               </div>
             )}
           </div>
-        <div className={styles.uploadArea}>
-          <ImageUpload
-            onFilesSelected={handleFilesSelected}
-            isProcessing={isUploading}
-            isAuthenticated={Boolean(authToken)}
-            onRequireLogin={() => { setAuthError(null); setIsLoginOpen(true); }}
-            onLogout={handleLogout}
-            uploadProgress={uploadProgress}
-            locale={locale}
-          />
-        </div>
       </main>
 
       <footer className={styles.footer}>

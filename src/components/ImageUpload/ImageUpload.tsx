@@ -18,6 +18,7 @@ interface ImageUploadProps {
     totalBytes: number;
   } | null;
   locale: Locale;
+  cardMode?: boolean;
 }
 
 const ACCEPTED_TYPES = [
@@ -37,6 +38,7 @@ export default function ImageUpload({
   onLogout,
   uploadProgress = null,
   locale,
+  cardMode = false,
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -155,9 +157,9 @@ export default function ImageUpload({
     totalBytes > 0 ? Math.min(100, (uploadedBytes / totalBytes) * 100) : 0;
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cardMode ? styles.cardWrapper : styles.wrapper}>
       <div
-        className={`${styles.dropzone} ${isDragging ? styles.dragging : ""} ${isProcessing || isCompressing ? styles.processing : ""}`}
+        className={`${styles.dropzone} ${cardMode ? styles.cardDropzone : ""} ${isDragging ? styles.dragging : ""} ${isProcessing || isCompressing ? styles.processing : ""}`}
         onClick={() => {
           if (isProcessing || isCompressing) return;
           if (!isAuthenticated) {
@@ -210,25 +212,27 @@ export default function ImageUpload({
           </div>
         )}
       </div>
-      <div className={styles.authRow}>
-        {isAuthenticated ? (
-          <button
-            type="button"
-            className={`${styles.belowBoxBtn} ${styles.belowBoxBtnLoggedIn}`}
-            onClick={onLogout}
-          >
-            ✓ {t.logout}
-          </button>
-        ) : (
-          <button
-            type="button"
-            className={`${styles.belowBoxBtn} ${styles.belowBoxBtnLogin}`}
-            onClick={onRequireLogin}
-          >
-            → {t.loginToUpload}
-          </button>
-        )}
-      </div>
+      {!cardMode && (
+        <div className={styles.authRow}>
+          {isAuthenticated ? (
+            <button
+              type="button"
+              className={`${styles.belowBoxBtn} ${styles.belowBoxBtnLoggedIn}`}
+              onClick={onLogout}
+            >
+              ✓ {t.logout}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`${styles.belowBoxBtn} ${styles.belowBoxBtnLogin}`}
+              onClick={onRequireLogin}
+            >
+              → {t.loginToUpload}
+            </button>
+          )}
+        </div>
+      )}
       {error && (
         <p className={styles.error} role="alert">
           {error}

@@ -1,6 +1,7 @@
 import type { GalleryImage } from "../../types";
 import type { Locale } from "../../i18n";
 import { useMemo } from "react";
+import type React from "react";
 import ImageCard from "../ImageCard/ImageCard";
 import styles from "./Images.module.css";
 
@@ -19,6 +20,7 @@ interface ImagesProps {
   onEditMetadata: (id: string) => void;
   isAuthenticated?: boolean;
   locale: Locale;
+  uploadSlot?: React.ReactNode;
 }
 
 export default function Images({
@@ -36,6 +38,7 @@ export default function Images({
   onEditMetadata,
   isAuthenticated = false,
   locale,
+  uploadSlot,
 }: ImagesProps) {
   const t =
     locale === "sv"
@@ -65,11 +68,11 @@ export default function Images({
     );
   }, [images]);
 
-  if (isLoading && images.length === 0) {
+  if (isLoading && images.length === 0 && !uploadSlot) {
     return <div className={styles.empty}>{t.loading}</div>;
   }
 
-  if (images.length === 0) {
+  if (images.length === 0 && !uploadSlot) {
     return (
       <div className={styles.empty}>
         <p>{t.empty}</p>
@@ -80,6 +83,7 @@ export default function Images({
   return (
     <section aria-label={t.aria}>
       <div className={styles.gallery}>
+        {uploadSlot}
         {sortedImages.map((image) => (
           <ImageCard
             key={image.id}
@@ -96,7 +100,7 @@ export default function Images({
         ))}
       </div>
 
-      <div className={styles.pagerRow}>
+      {totalItems > 0 && <div className={styles.pagerRow}>
         <div className={styles.pageControls}>
           <button
             type="button"
@@ -138,7 +142,7 @@ export default function Images({
           </button>
         </div>
 
-      </div>
+      </div>}
     </section>
   );
 }
