@@ -210,6 +210,9 @@ export default function App() {
   >(() => new Set());
   const previewedBadgeTimeoutsRef = useRef<Map<string, number>>(new Map());
   const swipeTouchStartXRef = useRef<number | null>(null);
+  const [previewFadeKey, setPreviewFadeKey] = useState(0);
+  const previewFadeActiveRef = useRef(false);
+  const [mapPreviewMode, setMapPreviewMode] = useState(false);
   const [previewImageId, setPreviewImageId] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(() =>
     localStorage.getItem(AUTH_STORAGE_KEY),
@@ -530,8 +533,15 @@ export default function App() {
       (currentIndex + direction + sortedImages.length) % sortedImages.length;
     const nextId = sortedImages[nextIndex].id;
 
-    setPreviewImageId(nextId);
+    if (activeTab === "map") {
+      previewFadeActiveRef.current = true;
+      setPreviewFadeKey((prev) => prev + 1);
+    } else {
+      previewFadeActiveRef.current = false;
+    }
+
     setSelectedId(nextId);
+    setPreviewImageId(nextId);
     markImageAsPreviewed(nextId);
   };
 
@@ -950,6 +960,8 @@ export default function App() {
                   selectedId={selectedId}
                   onSelect={(id) => {
                     const nextId = id === selectedId ? null : id;
+                    previewFadeActiveRef.current = false;
+                    setMapPreviewMode(false);
                     setSelectedId(nextId);
                     setPreviewImageId(nextId);
                     markImageAsPreviewed(nextId);
@@ -981,7 +993,10 @@ export default function App() {
                       setSelectedId(id === selectedId ? null : id)
                     }
                     onOpenImage={(id) => {
-                      setSelectedId(id);
+                      previewFadeActiveRef.current = true;
+                      setMapPreviewMode(true);
+                      setPreviewFadeKey((prev) => prev + 1);
+                      setSelectedId(null);
                       setPreviewImageId(id);
                       markImageAsPreviewed(id);
                     }}
@@ -1017,7 +1032,7 @@ export default function App() {
 
       <Dialog
         open={previewImage !== null}
-        onClose={() => setPreviewImageId(null)}
+        onClose={() => { setPreviewImageId(null); setMapPreviewMode(false); }}
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft") {
             handlePreviewStep(-1);
@@ -1029,6 +1044,7 @@ export default function App() {
         }}
         maxWidth="lg"
         fullWidth
+        hideBackdrop={mapPreviewMode}
         sx={{
           "& .MuiPaper-root": {
             outline: "none",
@@ -1037,6 +1053,10 @@ export default function App() {
             display: "flex",
             flexDirection: "column",
             margin: "2vh 2vw",
+            ...(mapPreviewMode && {
+              background: "transparent",
+              boxShadow: "none",
+            }),
           },
           "& .MuiDialog-container": {
             alignItems: "flex-start",
@@ -1088,11 +1108,19 @@ export default function App() {
           </>
         )}
 
-        <DialogContent sx={{ p: 0, bgcolor: "black", position: "relative", display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <DialogContent sx={{ p: 0, position: "relative", display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
           {previewImage && (
-            <>
+            <Box
+              key={previewFadeKey}
+              sx={{
+                display: "flex", flexDirection: "column", flex: 1, minHeight: 0,
+                bgcolor: "black",
+                "@keyframes previewFadeIn": { from: { opacity: 0 }, to: { opacity: 1 } },
+                animation: previewFadeActiveRef.current ? "previewFadeIn 2s ease-in forwards" : "none",
+              }}
+            >
               <Box
-                sx={{ position: "relative", flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", bgcolor: "black" }}
+                sx={{ position: "relative", flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}
                 onTouchStart={(e) => { swipeTouchStartXRef.current = e.touches[0].clientX; }}
                 onTouchEnd={(e) => {
                   if (swipeTouchStartXRef.current === null) return;
@@ -1200,7 +1228,7 @@ export default function App() {
                   {previewImage.comment?.trim() ?? ""}
                 </Box>
               </Box>
-            </>
+            </Box>
           )}
         </DialogContent>
       </Dialog>

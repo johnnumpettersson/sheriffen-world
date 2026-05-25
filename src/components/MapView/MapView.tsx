@@ -141,6 +141,42 @@ function ResetWorldViewControl({
   return null;
 }
 
+function PopupContent({
+  img,
+  unknownLocation,
+  onOpenImage,
+}: {
+  img: GalleryImage;
+  unknownLocation: string;
+  onOpenImage: (id: string) => void;
+}) {
+  const map = useMap();
+  return (
+    <div className={styles.popup}>
+      <button
+        type="button"
+        className={styles.popupImageButton}
+        onClick={() => {
+          map.closePopup();
+          onOpenImage(img.id);
+        }}
+      >
+        <img
+          src={img.mapThumbnailUrl || img.thumbnailUrl || img.dataUrl}
+          alt={img.name}
+          className={styles.popupImage}
+          loading="lazy"
+          decoding="async"
+        />
+      </button>
+      <p className={styles.popupName}>{getLocationName(img, unknownLocation)}</p>
+      <p className={styles.popupCoords}>
+        {img.location!.lat.toFixed(5)}, {img.location!.lng.toFixed(5)}
+      </p>
+    </div>
+  );
+}
+
 interface MapViewProps {
   images: GalleryImage[];
   selectedId: string | null;
@@ -201,27 +237,11 @@ export default function MapView({
             eventHandlers={{ click: () => onSelectMarker(img.id) }}
           >
             <Popup>
-              <div className={styles.popup}>
-                <button
-                  type="button"
-                  className={styles.popupImageButton}
-                  onClick={() => onOpenImage(img.id)}
-                >
-                  <img
-                    src={img.mapThumbnailUrl || img.thumbnailUrl || img.dataUrl}
-                    alt={img.name}
-                    className={styles.popupImage}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </button>
-                <p className={styles.popupName}>
-                  {getLocationName(img, t.unknownLocation)}
-                </p>
-                <p className={styles.popupCoords}>
-                  {img.location!.lat.toFixed(5)}, {img.location!.lng.toFixed(5)}
-                </p>
-              </div>
+              <PopupContent
+                img={img}
+                unknownLocation={t.unknownLocation}
+                onOpenImage={onOpenImage}
+              />
             </Popup>
           </Marker>
         ))}
