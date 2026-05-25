@@ -91,11 +91,11 @@ function ResetWorldViewControl({
   const t =
     locale === "sv"
       ? {
-          world: "Världskartan",
-          zoomOutWorld: "Zooma ut till varldsvy",
+          world: "Världsvy",
+          zoomOutWorld: "Zooma ut till världsvy",
         }
       : {
-          world: "World",
+          world: "World view",
           zoomOutWorld: "Zoom out to world view",
         };
 
