@@ -232,6 +232,13 @@
   background: var(--footer-bg);
 }
 
+.footerVersion {
+  color: #ffffff;
+  font-size: 0.75rem;
+  margin-right: 0.75rem;
+  opacity: 0.6;
+}
+
 .footerCreator {
   color: #e85d2c;
   font-weight: 600;

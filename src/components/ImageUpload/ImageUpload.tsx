@@ -27,8 +27,12 @@ const ACCEPTED_TYPES = [
   "image/webp",
   "image/gif",
   "image/heic",
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
 ];
-const MAX_FILE_SIZE_MB = 5 * 1024;
+const MAX_VIDEO_SIZE_MB = 500;
+const MAX_FILE_SIZE_MB = MAX_VIDEO_SIZE_MB;
 
 export default function ImageUpload({
   onFilesSelected,
@@ -58,7 +62,7 @@ export default function ImageUpload({
             `Laddar upp ${index}/${total}: ${name}`,
           dropPrefix: "Släpp bilder här eller",
           browse: "klicka for att välja",
-          hint: `JPEG · PNG · WebP · GIF · Max ${MAX_FILE_SIZE_MB} MB · GPS upptäcks automatiskt`,
+          hint: `JPEG · PNG · WebP · GIF · MP4 · MOV · WebM · Max ${MAX_FILE_SIZE_MB} MB`,
           authHint: "Inloggning krävs!",
           loginToUpload: "Logga in",
           logout: "Logga ut",
@@ -75,7 +79,7 @@ export default function ImageUpload({
             `Uploading ${index}/${total}: ${name}`,
           dropPrefix: "Drop images here or",
           browse: "click to browse",
-          hint: `JPEG · PNG · WebP · GIF · Max ${MAX_FILE_SIZE_MB} MB · GPS auto-detected`,
+          hint: `JPEG · PNG · WebP · GIF · MP4 · MOV · WebM · Max ${MAX_FILE_SIZE_MB} MB`,
           authHint: "Login required!",
           loginToUpload: "Log in to upload",
           logout: "Log out",

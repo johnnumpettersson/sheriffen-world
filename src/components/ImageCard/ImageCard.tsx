@@ -73,6 +73,9 @@ export default function ImageCard({
           loading="lazy"
           decoding="async"
         />
+        {(image.mediaType === "video" || image.type?.startsWith("video/")) && (
+          <span className={styles.playBadge}>▶</span>
+        )}
         {image.location && (
           <span className={styles.pinBadge} title={t.hasGps}>
             📍

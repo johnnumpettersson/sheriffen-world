@@ -5,6 +5,9 @@ import multer from "multer";
 import { Client as MinioClient } from "minio";
 import sanitize from "sanitize-filename";
 import sharp from "sharp";
+import ffmpegStatic from "ffmpeg-static";
+import ffprobeStatic from "ffprobe-static";
+import ffmpeg from "fluent-ffmpeg";
 import {
   createHmac,
   randomBytes,
@@ -17,6 +20,9 @@ import { promises as fsp } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
+
+ffmpeg.setFfmpegPath(ffmpegStatic);
+ffmpeg.setFfprobePath(ffprobeStatic.path);
 
 const STORAGE_RETRY_MAX_ATTEMPTS = Number(
   process.env.STORAGE_RETRY_MAX_ATTEMPTS ?? 10,
@@ -79,6 +85,25 @@ const UPLOAD_SESSION_TTL_MS = Number(
   process.env.UPLOAD_SESSION_TTL_MS ?? 1000 * 60 * 60 * 24,
 );
 const uploadSessions = new Map();
+const VIDEO_MIME_TYPES = new Set([
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
+  "video/x-msvideo",
+  "video/mpeg",
+  "video/x-matroska",
+]);
+const MAX_VIDEO_SIZE_BYTES = Number.isFinite(
+  Number(process.env.MAX_VIDEO_SIZE_BYTES),
+)
+  ? Number(process.env.MAX_VIDEO_SIZE_BYTES)
+  : 500 * 1024 * 1024;
+const VIDEO_THUMB_SUFFIX = "derivatives/video-thumb.webp";
+
+function isVideo(type) {
+  return VIDEO_MIME_TYPES.has((type ?? "").toLowerCase());
+}
+
 const IMAGE_VARIANTS = {
   mapThumbnail: {
     objectSuffix: "map-thumb-240.webp",
@@ -263,6 +288,41 @@ async function pipeObjectToResponse(res, objectKey, contentType) {
   objectStream.pipe(res);
 }
 
+async function pipeVideoToResponse(req, res, record) {
+  const stat = await minio.statObject(BUCKET, record.objectKey);
+  const fileSize = stat.size;
+  const contentType = record.type || "video/mp4";
+  const range = req.headers.range;
+
+  res.setHeader("Accept-Ranges", "bytes");
+  res.setHeader("Cache-Control", "public, max-age=3600");
+  res.setHeader("Content-Type", contentType);
+
+  if (!range) {
+    res.setHeader("Content-Length", fileSize);
+    const stream = await minio.getObject(BUCKET, record.objectKey);
+    stream.pipe(res);
+    return;
+  }
+
+  const [startStr, endStr] = range.replace(/bytes=/, "").split("-");
+  const start = parseInt(startStr, 10);
+  const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
+
+  if (isNaN(start) || start >= fileSize || end >= fileSize || start > end) {
+    res.status(416).setHeader("Content-Range", `bytes */${fileSize}`).end();
+    return;
+  }
+
+  const chunkSize = end - start + 1;
+  res.status(206);
+  res.setHeader("Content-Range", `bytes ${start}-${end}/${fileSize}`);
+  res.setHeader("Content-Length", chunkSize);
+
+  const stream = await minio.getPartialObject(BUCKET, record.objectKey, start, chunkSize);
+  stream.pipe(res);
+}
+
 function decimalToGPSRational(decimal) {
   const abs = Math.abs(decimal);
   const degrees = Math.floor(abs);
@@ -365,6 +425,57 @@ async function ensureImageVariant(record, variantName) {
   );
 
   return variantObjectKey;
+}
+
+async function generateVideoThumbnailFromSession(session, id) {
+  const tempVideoPath = path.join(session.tempDir, "concat.tmp");
+  const tempThumbPath = path.join(session.tempDir, "thumb.jpg");
+
+  // Concatenate chunks into a single temp file for ffmpeg
+  const writeStream = fs.createWriteStream(tempVideoPath);
+  await new Promise((resolve, reject) => {
+    writeStream.on("finish", resolve);
+    writeStream.on("error", reject);
+    (async () => {
+      for await (const chunk of readUploadChunks(session)) {
+        writeStream.write(chunk);
+      }
+      writeStream.end();
+    })().catch(reject);
+  });
+
+  // Try to get duration via ffprobe
+  const duration = await new Promise((resolve) => {
+    ffmpeg.ffprobe(tempVideoPath, (err, metadata) => {
+      resolve(err ? null : (metadata?.format?.duration ?? null));
+    });
+  });
+
+  // Extract first frame at 1 second (or 0 if shorter)
+  await new Promise((resolve, reject) => {
+    ffmpeg(tempVideoPath)
+      .screenshots({
+        timestamps: [Math.min(1, (duration ?? 0) * 0.1 || 0)],
+        filename: "thumb.jpg",
+        folder: session.tempDir,
+        size: "480x?",
+      })
+      .on("end", resolve)
+      .on("error", reject);
+  });
+
+  const thumbBuffer = await fsp.readFile(tempThumbPath);
+  const webpBuffer = await sharp(thumbBuffer)
+    .resize({ width: 480, withoutEnlargement: true })
+    .webp({ quality: 72 })
+    .toBuffer();
+
+  const objectKey = `${id}/${VIDEO_THUMB_SUFFIX}`;
+  await minio.putObject(BUCKET, objectKey, webpBuffer, webpBuffer.length, {
+    "Content-Type": "image/webp",
+  });
+
+  return { objectKey, duration };
 }
 
 async function getImageRecordById(imageId) {
@@ -492,25 +603,41 @@ async function* readUploadChunks(session) {
 
 async function createChunkedUploadRecord(session) {
   const id = randomUUID();
-  const originalName = sanitize(session.name) || `${id}.jpg`;
+  const originalName = sanitize(session.name) || `${id}.bin`;
   const objectKey = `${id}/${originalName}`;
+  const isVideoFile = isVideo(session.type);
 
   const stream = Readable.from(readUploadChunks(session));
   await minio.putObject(BUCKET, objectKey, stream, session.size, {
     "Content-Type": session.type || "application/octet-stream",
   });
 
+  let duration = null;
+  if (isVideoFile) {
+    try {
+      const result = await generateVideoThumbnailFromSession(session, id);
+      duration = result.duration;
+    } catch (err) {
+      console.warn(
+        "[api] video thumbnail generation failed:",
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
   const record = {
     id,
     name: session.name,
     dataUrl: `/api/images/${id}/file`,
     objectKey,
-    location: await enrichLocation(session.location),
+    location: isVideoFile ? null : await enrichLocation(session.location),
     comment: null,
     takenAt: session.takenAt,
     uploadedAt: new Date().toISOString(),
     size: session.size,
     type: session.type,
+    mediaType: isVideoFile ? "video" : "image",
+    ...(duration !== null && { duration }),
   };
 
   const records = await readManifest();
@@ -869,6 +996,14 @@ app.post("/api/uploads/initiate", requireUploadAuth, async (req, res, next) => {
       return;
     }
 
+    const maxSize = isVideo(type) ? MAX_VIDEO_SIZE_BYTES : 20 * 1024 * 1024;
+    if (size > maxSize) {
+      res.status(413).json({
+        error: `File exceeds the ${Math.round(maxSize / 1024 / 1024)} MB limit`,
+      });
+      return;
+    }
+
     const takenAt = parseTakenAtInput(req.body?.takenAt);
     const location = req.body?.location
       ? normalizeEditableLocation(req.body.location)
@@ -1119,6 +1254,18 @@ app.get("/api/images/:id/file", async (req, res, next) => {
       return;
     }
 
+    // Redirect videos to a pre-signed R2 URL so the browser streams directly
+    // from R2 (range requests, seeking, full bandwidth — no server proxy).
+    if (isVideo(record.type)) {
+      const signedUrl = await minio.presignedGetObject(
+        BUCKET,
+        record.objectKey,
+        60 * 60, // 1-hour expiry
+      );
+      res.redirect(302, signedUrl);
+      return;
+    }
+
     const hasMetadata =
       (record.location?.lat != null && record.location?.lng != null) ||
       record.takenAt != null;
@@ -1157,6 +1304,16 @@ app.get("/api/images/:id/thumbnail", async (req, res, next) => {
       return;
     }
 
+    if (isVideo(record.type)) {
+      const thumbKey = `${record.id}/${VIDEO_THUMB_SUFFIX}`;
+      if (await objectExists(thumbKey)) {
+        await pipeObjectToResponse(res, thumbKey, "image/webp");
+      } else {
+        res.status(404).json({ error: "Video thumbnail not available" });
+      }
+      return;
+    }
+
     try {
       const variantObjectKey = await ensureImageVariant(record, "thumbnail");
       await pipeObjectToResponse(res, variantObjectKey, "image/webp");
@@ -1184,6 +1341,16 @@ app.get("/api/images/:id/map-thumbnail", async (req, res, next) => {
 
     if (!record) {
       res.status(404).json({ error: "Image not found" });
+      return;
+    }
+
+    if (isVideo(record.type)) {
+      const thumbKey = `${record.id}/${VIDEO_THUMB_SUFFIX}`;
+      if (await objectExists(thumbKey)) {
+        await pipeObjectToResponse(res, thumbKey, "image/webp");
+      } else {
+        res.status(404).json({ error: "Video thumbnail not available" });
+      }
       return;
     }
 
@@ -1222,6 +1389,16 @@ app.get("/api/images/:id/preview", async (req, res, next) => {
 
     if (!record) {
       res.status(404).json({ error: "Image not found" });
+      return;
+    }
+
+    if (isVideo(record.type)) {
+      const thumbKey = `${record.id}/${VIDEO_THUMB_SUFFIX}`;
+      if (await objectExists(thumbKey)) {
+        await pipeObjectToResponse(res, thumbKey, "image/webp");
+      } else {
+        res.status(404).json({ error: "Video thumbnail not available" });
+      }
       return;
     }
 
@@ -1301,14 +1478,14 @@ app.delete("/api/images/:id", requireUploadAuth, async (req, res, next) => {
 
     const [record] = records.splice(index, 1);
     await minio.removeObject(BUCKET, record.objectKey);
-    await Promise.allSettled(
-      Object.keys(IMAGE_VARIANTS).map((variantName) =>
-        minio.removeObject(
-          BUCKET,
-          getImageVariantObjectKey(record, variantName),
-        ),
+    await Promise.allSettled([
+      ...Object.keys(IMAGE_VARIANTS).map((variantName) =>
+        minio.removeObject(BUCKET, getImageVariantObjectKey(record, variantName)),
       ),
-    );
+      ...(isVideo(record.type)
+        ? [minio.removeObject(BUCKET, `${record.id}/${VIDEO_THUMB_SUFFIX}`)]
+        : []),
+    ]);
     await writeManifest(records);
 
     res.status(204).send();

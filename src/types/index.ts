@@ -21,4 +21,6 @@ export interface GalleryImage {
   uploadedAt: Date;
   size: number;
   type: string;
+  mediaType?: "image" | "video";
+  duration?: number;
 }

@@ -22,6 +22,8 @@ interface ApiImageRecord {
   uploadedAt: string;
   size: number;
   type: string;
+  mediaType?: "image" | "video";
+  duration?: number;
 }
 
 interface UploadSessionInitResponse {
@@ -206,6 +208,10 @@ export function useImageGallery() {
         };
 
         try {
+          if (file.type.startsWith("video/")) {
+            // Videos don't carry EXIF GPS — skip extraction entirely.
+            throw new Error("skip-exif");
+          }
           // Use pre-extracted EXIF when provided (compression strips EXIF from canvas output).
           // Fall back to parsing the file directly for uncompressed originals.
           const preExtracted = preExtractedExifList?.[fileIndex];
@@ -381,6 +387,8 @@ function fromApiImageRecord(record: ApiImageRecord): GalleryImage {
     uploadedAt: new Date(record.uploadedAt),
     size: record.size,
     type: record.type,
+    mediaType: record.mediaType,
+    duration: record.duration,
   };
 }
 

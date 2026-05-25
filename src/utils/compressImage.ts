@@ -2,6 +2,14 @@ import exifr from "exifr";
 
 const MAX_DIMENSION = 3200;
 const WEBP_QUALITY = 0.85;
+const VIDEO_MIME_TYPES = new Set([
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
+  "video/x-msvideo",
+  "video/mpeg",
+  "video/x-matroska",
+]);
 
 export interface ImageExif {
   latitude: number | null;
@@ -19,6 +27,11 @@ interface CompressionResult {
 
 export async function compressImage(file: File): Promise<CompressionResult> {
   const originalSize = file.size;
+
+  // Videos are not compressible via canvas — pass through unchanged.
+  if (VIDEO_MIME_TYPES.has(file.type)) {
+    return { file, originalSize, compressedSize: originalSize, compressionRatio: 1, exif: null };
+  }
 
   // Extract EXIF from the original file before canvas strips it.
   let exif: ImageExif | null = null;

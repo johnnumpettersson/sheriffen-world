@@ -1039,6 +1039,7 @@ export default function App() {
       </main>
 
       <footer className={styles.footer}>
+        <span className={styles.footerVersion}>v{__APP_VERSION__}</span>
         <span>{t.createdBy} </span>
         <span className={styles.footerCreator}>John</span>
         <span> &amp; </span>
@@ -1146,18 +1147,28 @@ export default function App() {
                   handlePreviewStep(deltaX < 0 ? 1 : -1);
                 }}
               >
-                <img
-                  src={previewImage.previewUrl || previewImage.dataUrl}
-                  alt={previewImage.name}
-                  loading="eager"
-                  decoding="async"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain",
-                    display: "block",
-                  }}
-                />
+                {previewImage.mediaType === "video" || previewImage.type?.startsWith("video/") ? (
+                  <video
+                    src={previewImage.dataUrl}
+                    controls
+                    autoPlay
+                    playsInline
+                    style={{ maxWidth: "100%", maxHeight: "100%", display: "block" }}
+                  />
+                ) : (
+                  <img
+                    src={previewImage.previewUrl || previewImage.dataUrl}
+                    alt={previewImage.name}
+                    loading="eager"
+                    decoding="async"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                      display: "block",
+                    }}
+                  />
+                )}
                 <Box
                   sx={{
                     position: "absolute",
