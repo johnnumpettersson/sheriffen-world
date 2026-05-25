@@ -76,7 +76,7 @@ const appText = {
     subtitle: "Upload photos and see them on a world map",
     uploadLoginActive: "Upload login active",
     logout: "Log out",
-    loginToUpload: "Log in to upload",
+    loginToUpload: "Log in",
     imagesLabel: (count: number) => `${count} image${count !== 1 ? "s" : ""}`,
     withGpsLabel: (count: number) => `${count} with GPS location`,
     selectedLabel: (name: string) => `Selected: ${name}`,
@@ -878,8 +878,27 @@ export default function App() {
     >
       <main className={styles.main}>
         <div className={styles.heroBanner}>
-          <img src="/sheriffen.png" alt="Sheriffen" className={styles.heroImage} />
-          <h1 className={styles.heroTitle}>Sheriffen</h1>
+          <div className={styles.heroBannerContent}>
+            <img src="/sheriffen.png" alt="Sheriffen" className={styles.heroImage} />
+            <h1 className={styles.heroTitle}>Sheriffen</h1>
+          </div>
+          {authToken ? (
+            <button
+              type="button"
+              className={`${styles.authBtn} ${styles.authBtnLoggedIn}`}
+              onClick={handleLogout}
+            >
+              ✓ {t.logout}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`${styles.authBtn} ${styles.authBtnLogin}`}
+              onClick={() => { setAuthError(null); setIsLoginOpen(true); }}
+            >
+              → {t.loginToUpload}
+            </button>
+          )}
         </div>
         <div className={styles.centerColumn}>
           <div className={styles.tabBar}>
@@ -929,23 +948,6 @@ export default function App() {
                   <GB className={styles.langFlag} title="English" />
                 </IconButton>
               </div>
-              {authToken ? (
-                <button
-                  type="button"
-                  className={`${styles.authBtn} ${styles.authBtnLoggedIn}`}
-                  onClick={handleLogout}
-                >
-                  ✓ {t.logout}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className={`${styles.authBtn} ${styles.authBtnLogin}`}
-                  onClick={() => { setAuthError(null); setIsLoginOpen(true); }}
-                >
-                  → {t.loginToUpload}
-                </button>
-              )}
             </div>
           </div>
             <div className={styles.content}>

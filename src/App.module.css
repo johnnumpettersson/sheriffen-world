@@ -62,11 +62,17 @@
 /* ── Hero banner ── */
 .heroBanner {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+.heroBannerContent {
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: clamp(0.75rem, 2vw, 1.5rem);
-  flex-shrink: 0;
-  margin-bottom: clamp(1.5rem, 2.5vw, 2.25rem);
 }
 
 .heroImage {
@@ -142,8 +148,9 @@
   gap: 0.3rem;
 }
 
-/* ── Auth button in tab bar ── */
+/* ── Auth button below hero ── */
 .authBtn {
+  margin-top: 10px;
   font-size: 0.8rem;
   font-weight: 700;
   color: #ffffff;
