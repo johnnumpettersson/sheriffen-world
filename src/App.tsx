@@ -209,6 +209,7 @@ export default function App() {
     Set<string>
   >(() => new Set());
   const previewedBadgeTimeoutsRef = useRef<Map<string, number>>(new Map());
+  const swipeTouchStartXRef = useRef<number | null>(null);
   const [previewImageId, setPreviewImageId] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(() =>
     localStorage.getItem(AUTH_STORAGE_KEY),
@@ -1028,7 +1029,19 @@ export default function App() {
         }}
         maxWidth="lg"
         fullWidth
-        sx={{ "& .MuiPaper-root": { outline: "none" } }}
+        sx={{
+          "& .MuiPaper-root": {
+            outline: "none",
+            height: "96vh",
+            maxHeight: "96vh",
+            display: "flex",
+            flexDirection: "column",
+            margin: "2vh 2vw",
+          },
+          "& .MuiDialog-container": {
+            alignItems: "flex-start",
+          },
+        }}
       >
         <IconButton
           aria-label="Close image preview"
@@ -1075,18 +1088,28 @@ export default function App() {
           </>
         )}
 
-        <DialogContent sx={{ p: 0, bgcolor: "black", position: "relative" }}>
+        <DialogContent sx={{ p: 0, bgcolor: "black", position: "relative", display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
           {previewImage && (
             <>
-              <Box sx={{ position: "relative" }}>
+              <Box
+                sx={{ position: "relative", flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", bgcolor: "black" }}
+                onTouchStart={(e) => { swipeTouchStartXRef.current = e.touches[0].clientX; }}
+                onTouchEnd={(e) => {
+                  if (swipeTouchStartXRef.current === null) return;
+                  const deltaX = e.changedTouches[0].clientX - swipeTouchStartXRef.current;
+                  swipeTouchStartXRef.current = null;
+                  if (Math.abs(deltaX) < 50) return;
+                  handlePreviewStep(deltaX < 0 ? 1 : -1);
+                }}
+              >
                 <img
                   src={previewImage.previewUrl || previewImage.dataUrl}
                   alt={previewImage.name}
                   loading="eager"
                   decoding="async"
                   style={{
-                    width: "100%",
-                    maxHeight: "80vh",
+                    maxWidth: "100%",
+                    maxHeight: "100%",
                     objectFit: "contain",
                     display: "block",
                   }}
@@ -1117,6 +1140,7 @@ export default function App() {
                   borderTop: "1px solid rgba(255, 255, 255, 0.1)",
                   display: "grid",
                   gap: 0.5,
+                  flexShrink: 0,
                 }}
               >
                 {previewImage.takenAt && (
