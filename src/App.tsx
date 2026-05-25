@@ -1011,6 +1011,7 @@ export default function App() {
         }}
         maxWidth="lg"
         fullWidth
+        sx={{ "& .MuiPaper-root": { outline: "none" } }}
       >
         <IconButton
           aria-label="Close image preview"
@@ -1101,6 +1102,12 @@ export default function App() {
                   gap: 0.5,
                 }}
               >
+                {previewImage.takenAt && (
+                  <Box sx={{ fontSize: "0.86rem" }}>
+                    <strong>{t.date}:</strong>{" "}
+                    {previewImage.takenAt.getUTCFullYear()}
+                  </Box>
+                )}
                 <Box
                   sx={{
                     fontSize: "0.86rem",
