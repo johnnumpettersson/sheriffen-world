@@ -987,7 +987,7 @@ export default function App() {
               ) : (
                 <div className={styles.mapWrapper}>
                   <MapView
-                    images={images}
+                    images={mapPreviewMode && previewImage ? [previewImage] : images}
                     selectedId={selectedId}
                     onSelectMarker={(id) =>
                       setSelectedId(id === selectedId ? null : id)
@@ -1116,7 +1116,8 @@ export default function App() {
                 display: "flex", flexDirection: "column", flex: 1, minHeight: 0,
                 bgcolor: "black",
                 "@keyframes previewFadeIn": { from: { opacity: 0 }, to: { opacity: 1 } },
-                animation: previewFadeActiveRef.current ? "previewFadeIn 2s ease-in forwards" : "none",
+                opacity: previewFadeActiveRef.current ? 0 : 0.75,
+                animation: previewFadeActiveRef.current ? "previewFadeIn 0.5s ease-in 1s forwards" : "none",
               }}
             >
               <Box
