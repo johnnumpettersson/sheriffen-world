@@ -841,6 +841,17 @@ export default function App() {
     };
   }, [previewImage, previewResolvedLocationCache]);
 
+  useEffect(() => {
+    if (previewIndex < 0 || sortedImages.length <= 1) return;
+    for (const dir of [-1, 1]) {
+      const idx = (previewIndex + dir + sortedImages.length) % sortedImages.length;
+      const img = sortedImages[idx];
+      const src = img.previewUrl || img.dataUrl;
+      const el = new window.Image();
+      el.src = src;
+    }
+  }, [previewIndex, sortedImages]);
+
   return (
     <div
       className={styles.app}
