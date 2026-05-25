@@ -1050,8 +1050,8 @@ export default function App() {
         sx={{
           "& .MuiPaper-root": {
             outline: "none",
-            height: "96vh",
-            maxHeight: "96vh",
+            height: { xs: "86vh", sm: "96vh" },
+            maxHeight: { xs: "86vh", sm: "96vh" },
             display: "flex",
             flexDirection: "column",
             margin: "2vh 2vw",
@@ -1061,7 +1061,7 @@ export default function App() {
             }),
           },
           "& .MuiDialog-container": {
-            alignItems: "flex-start",
+            alignItems: "center",
           },
         }}
       >
