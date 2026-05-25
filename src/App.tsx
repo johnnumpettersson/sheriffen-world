@@ -32,6 +32,7 @@ import CountriesList from "./components/CountriesList/CountriesList";
 import type { Locale } from "./i18n";
 import type { GeoLocation } from "./types";
 import type { ImageExif } from "./utils/compressImage";
+import { useNavigate, useMatch } from "react-router-dom";
 import styles from "./App.module.css";
 
 type Tab = "gallery" | "map";
@@ -199,7 +200,11 @@ export default function App() {
     removeImage,
     updateImageMetadata,
   } = useImageGallery();
-  const [activeTab, setActiveTab] = useState<Tab>("map");
+  const navigate = useNavigate();
+  const galleryMatch = useMatch("/gallery/*");
+  const activeTab: Tab = galleryMatch ? "gallery" : "map";
+  const mapImageMatch = useMatch("/map/image/:id");
+  const galleryImageMatch = useMatch("/gallery/image/:id");
   const [newUploadCount, setNewUploadCount] = useState(0);
   const [carouselResetSignal, setCarouselResetSignal] = useState(0);
   const [unpreviewedImageIds, setUnpreviewedImageIds] = useState<Set<string>>(
@@ -213,7 +218,7 @@ export default function App() {
   const [previewFadeKey, setPreviewFadeKey] = useState(0);
   const previewFadeActiveRef = useRef(false);
   const [mapPreviewMode, setMapPreviewMode] = useState(false);
-  const [previewImageId, setPreviewImageId] = useState<string | null>(null);
+  const previewImageId = mapImageMatch?.params.id ?? galleryImageMatch?.params.id ?? null;
   const [authToken, setAuthToken] = useState<string | null>(() =>
     localStorage.getItem(AUTH_STORAGE_KEY),
   );
@@ -447,7 +452,7 @@ export default function App() {
 
   const handleSelectSidebarLocation = (imageId: string) => {
     setSelectedId(imageId);
-    setActiveTab("map");
+    navigate("/map");
   };
 
   const sortedImages = useMemo(
@@ -494,7 +499,7 @@ export default function App() {
     }
 
     if (previewImageId === deleteCandidate.id) {
-      setPreviewImageId(null);
+      navigate(`/${activeTab}`);
     }
 
     setUnpreviewedImageIds((prev) => {
@@ -541,7 +546,7 @@ export default function App() {
     }
 
     setSelectedId(nextId);
-    setPreviewImageId(nextId);
+    navigate(`/${activeTab}/image/${nextId}`);
     markImageAsPreviewed(nextId);
   };
 
@@ -853,6 +858,10 @@ export default function App() {
   }, [previewImage, previewResolvedLocationCache]);
 
   useEffect(() => {
+    if (!previewImageId) setMapPreviewMode(false);
+  }, [previewImageId]);
+
+  useEffect(() => {
     if (previewIndex < 0 || sortedImages.length <= 1) return;
     for (const dir of [-1, 1]) {
       const idx = (previewIndex + dir + sortedImages.length) % sortedImages.length;
@@ -905,7 +914,7 @@ export default function App() {
             <Tabs
               value={activeTab}
               onChange={(_, value: Tab) => {
-                setActiveTab(value);
+                navigate(`/${value}`);
                 if (value === "gallery") {
                   setNewUploadCount(0);
                 }
@@ -965,8 +974,12 @@ export default function App() {
                     previewFadeActiveRef.current = false;
                     setMapPreviewMode(false);
                     setSelectedId(nextId);
-                    setPreviewImageId(nextId);
-                    markImageAsPreviewed(nextId);
+                    if (nextId) {
+                      navigate(`/${activeTab}/image/${nextId}`);
+                      markImageAsPreviewed(nextId);
+                    } else {
+                      navigate(`/${activeTab}`);
+                    }
                   }}
                   onRemove={setDeleteCandidateId}
                   onEditMetadata={handleOpenMetadataEditor}
@@ -999,7 +1012,7 @@ export default function App() {
                       setMapPreviewMode(true);
                       setPreviewFadeKey((prev) => prev + 1);
                       setSelectedId(null);
-                      setPreviewImageId(id);
+                      navigate(`/${activeTab}/image/${id}`);
                       markImageAsPreviewed(id);
                     }}
                     onResetView={() => {
@@ -1034,7 +1047,7 @@ export default function App() {
 
       <Dialog
         open={previewImage !== null}
-        onClose={() => { setPreviewImageId(null); setMapPreviewMode(false); }}
+        onClose={() => navigate(`/${activeTab}`)}
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft") {
             handlePreviewStep(-1);
@@ -1067,7 +1080,7 @@ export default function App() {
       >
         <IconButton
           aria-label="Close image preview"
-          onClick={() => setPreviewImageId(null)}
+          onClick={() => navigate(`/${activeTab}`)}
           sx={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}
         >
           <CloseIcon />
