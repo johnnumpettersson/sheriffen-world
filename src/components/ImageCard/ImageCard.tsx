@@ -61,6 +61,8 @@ export default function ImageCard({
           removeTitle: "Remove image",
         };
 
+  const isOversized = image.mediaType !== "video" && !image.type?.startsWith("video/") && image.size > 5 * 1024 * 1024;
+
   const handleClick = () => {
     if (bulkSelectMode) {
       onToggleCheck?.(image.id);
@@ -71,7 +73,7 @@ export default function ImageCard({
 
   return (
     <article
-      className={`${styles.card} ${isSelected && !bulkSelectMode ? styles.selected : ""} ${isChecked ? styles.checked : ""}`}
+      className={`${styles.card} ${isSelected && !bulkSelectMode ? styles.selected : ""} ${isChecked ? styles.checked : ""} ${isOversized ? styles.oversized : ""}`}
       onClick={handleClick}
       tabIndex={0}
       role="button"

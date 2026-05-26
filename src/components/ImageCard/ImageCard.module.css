@@ -248,6 +248,16 @@
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.45);
 }
 
+.oversized {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.35);
+}
+
+.oversized:hover {
+  border-color: #b91c1c;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.45);
+}
+
 .checkOverlay {
   position: absolute;
   bottom: 6px;
