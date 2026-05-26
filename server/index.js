@@ -605,16 +605,51 @@ async function* readUploadChunks(session) {
   }
 }
 
+async function compressImageBuffer(buffer, mimeType) {
+  try {
+    const compressed = await sharp(buffer)
+      .rotate()
+      .resize({ width: 3000, height: 3000, fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+    return { buffer: compressed, contentType: "image/jpeg" };
+  } catch (err) {
+    console.warn("[api] image compression failed, storing original:", err instanceof Error ? err.message : String(err));
+    return { buffer, contentType: mimeType };
+  }
+}
+
 async function createChunkedUploadRecord(session) {
   const id = randomUUID();
-  const originalName = sanitize(session.name) || `${id}.bin`;
-  const objectKey = `${id}/${originalName}`;
   const isVideoFile = isVideo(session.type);
+  const isImageFile = !isVideoFile && (session.type ?? "").startsWith("image/");
 
-  const stream = Readable.from(readUploadChunks(session));
-  await minio.putObject(BUCKET, objectKey, stream, session.size, {
-    "Content-Type": session.type || "application/octet-stream",
-  });
+  let objectKey;
+  let storeSize;
+  let storeContentType;
+
+  if (isImageFile) {
+    const chunks = [];
+    for await (const chunk of readUploadChunks(session)) chunks.push(chunk);
+    const rawBuffer = Buffer.concat(chunks);
+    const { buffer: compressed, contentType } = await compressImageBuffer(rawBuffer, session.type);
+    const baseName = sanitize(session.name).replace(/\.[^.]+$/, "") || id;
+    objectKey = `${id}/${baseName}.jpg`;
+    storeSize = compressed.length;
+    storeContentType = contentType;
+    await minio.putObject(BUCKET, objectKey, compressed, compressed.length, {
+      "Content-Type": contentType,
+    });
+  } else {
+    const originalName = sanitize(session.name) || `${id}.bin`;
+    objectKey = `${id}/${originalName}`;
+    storeSize = session.size;
+    storeContentType = session.type || "application/octet-stream";
+    const stream = Readable.from(readUploadChunks(session));
+    await minio.putObject(BUCKET, objectKey, stream, session.size, {
+      "Content-Type": storeContentType,
+    });
+  }
 
   let duration = null;
   if (isVideoFile) {
@@ -638,8 +673,8 @@ async function createChunkedUploadRecord(session) {
     comment: null,
     takenAt: session.takenAt,
     uploadedAt: new Date().toISOString(),
-    size: session.size,
-    type: session.type,
+    size: storeSize,
+    type: storeContentType,
     mediaType: isVideoFile ? "video" : "image",
     gallery: session.gallery ?? "main",
     ...(duration !== null && { duration }),
