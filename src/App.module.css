@@ -329,6 +329,38 @@
   }
 }
 
+.subNav {
+  display: flex;
+  gap: 0.5rem;
+  margin: 7px 0;
+}
+
+.subNavLink {
+  background: none;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+
+.subNavLink:hover {
+  color: #e85d2c;
+  border-color: rgba(232, 93, 44, 0.45);
+}
+
+.subNavLinkActive {
+  color: #e85d2c;
+  border-color: rgba(232, 93, 44, 0.6);
+  background: rgba(232, 93, 44, 0.06);
+  font-weight: 600;
+}
+
 .bulkDeleteOverlay {
   position: fixed;
   inset: 0;

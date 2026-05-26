@@ -28,6 +28,7 @@ interface ImagesProps {
   onToggleImageSelect?: (id: string) => void;
   onBulkDelete?: () => void;
   onMarkAllPage?: () => void;
+  toolbarSlot?: React.ReactNode;
 }
 
 export default function Images({
@@ -53,6 +54,7 @@ export default function Images({
   onToggleImageSelect,
   onBulkDelete,
   onMarkAllPage,
+  toolbarSlot,
 }: ImagesProps) {
   const t =
     locale === "sv"
@@ -169,8 +171,9 @@ export default function Images({
   return (
     <section aria-label={t.aria}>
       {showTopPager && renderPager(totalItems === 0)}
-      {isAuthenticated && totalItems > 0 && (
+      {((isAuthenticated && totalItems > 0) || toolbarSlot) && (
         <div className={styles.bulkToolbar}>
+          <div className={styles.toolbarLeft}>{toolbarSlot}</div>
           {checkedCount > 0 && (
             <button
               type="button"

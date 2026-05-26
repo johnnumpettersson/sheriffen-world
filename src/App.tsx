@@ -1027,10 +1027,12 @@ export default function App() {
                   }
                 }}
                 aria-label="Gallery and map view tabs"
+                sx={{ minHeight: 36 }}
               >
-                <Tab value="map" label={t.worldMapTab(imagesWithLocation.length)} />
+                <Tab value="map" label={t.worldMapTab(imagesWithLocation.length)} sx={{ minHeight: 36, paddingBottom: "6px" }} />
                 <Tab
                   value="gallery"
+                  sx={{ minHeight: 36, paddingBottom: "6px" }}
                   label={
                     <Badge
                       color="error"
@@ -1067,22 +1069,6 @@ export default function App() {
             <div className={styles.content}>
               {activeTab !== "map" ? (
                 <>
-                  {!isKidsMode && (
-                    <Tabs
-                      value={gallerySubTab}
-                      onChange={(_, value: "main" | "kids" | "resor") => {
-                        if (value === "kids") navigate("/kids");
-                        else if (value === "resor") navigate("/resor");
-                        else navigate("/gallery");
-                      }}
-                      textColor="secondary"
-                      indicatorColor="secondary"
-                      sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}
-                    >
-                      <Tab value="main" label={t.sheriffenTab(mainGallery.galleryTotalItems)} />
-                      <Tab value="resor" label={t.resorTab(resorGallery.galleryTotalItems)} />
-                    </Tabs>
-                  )}
                   {isKidsMode && !authToken ? (
                     <div className={styles.kidsLoginPrompt}>
                       <span>{t.kidsLoginRequired}</span>
@@ -1126,6 +1112,16 @@ export default function App() {
                     onToggleImageSelect={handleToggleImageSelect}
                     onBulkDelete={() => setIsBulkDeleteOpen(true)}
                     onMarkAllPage={handleMarkAllPage}
+                    toolbarSlot={!isKidsMode && (
+                      <nav className={styles.subNav}>
+                        <button type="button" className={`${styles.subNavLink} ${gallerySubTab === "main" ? styles.subNavLinkActive : ""}`} onClick={() => navigate("/gallery")}>
+                          {t.sheriffenTab(mainGallery.galleryTotalItems)}
+                        </button>
+                        <button type="button" className={`${styles.subNavLink} ${gallerySubTab === "resor" ? styles.subNavLinkActive : ""}`} onClick={() => navigate("/resor")}>
+                          {t.resorTab(resorGallery.galleryTotalItems)}
+                        </button>
+                      </nav>
+                    )}
                     uploadSlot={
                       <ImageUpload
                         onFilesSelected={handleFilesSelected}

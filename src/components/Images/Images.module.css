@@ -129,8 +129,13 @@
 .bulkToolbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-bottom: 0.75rem;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
 }
 
 .trashBtn {
