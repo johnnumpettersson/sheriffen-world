@@ -32,7 +32,7 @@ import CountriesList from "./components/CountriesList/CountriesList";
 import type { Locale } from "./i18n";
 import type { GeoLocation } from "./types";
 import type { ImageExif } from "./utils/compressImage";
-import { useNavigate, useMatch } from "react-router-dom";
+import { useNavigate, useMatch, useSearchParams } from "react-router-dom";
 import styles from "./App.module.css";
 
 type Tab = "gallery" | "map" | "kids" | "resor";
@@ -196,6 +196,7 @@ export default function App() {
   const kidsGallery = useImageGallery("kids");
   const resorGallery = useImageGallery("resor");
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const galleryMatch = useMatch("/gallery/*");
   const kidsMatch = useMatch("/kids/*");
   const resorMatch = useMatch("/resor/*");
@@ -203,6 +204,7 @@ export default function App() {
   const activeGallery = activeTab === "kids" ? kidsGallery : activeTab === "resor" ? resorGallery : mainGallery;
   const topTab: "gallery" | "map" = (galleryMatch || kidsMatch || resorMatch) ? "gallery" : "map";
   const gallerySubTab: "main" | "kids" | "resor" = kidsMatch ? "kids" : resorMatch ? "resor" : "main";
+  const urlPage = Math.max(1, Number(searchParams.get("page")) || 1);
   const {
     images,
     galleryPageImages,
@@ -877,6 +879,10 @@ export default function App() {
     if (!previewImageId) setMapPreviewMode(false);
   }, [previewImageId]);
 
+  useEffect(() => {
+    setGalleryPage(urlPage);
+  }, [urlPage, setGalleryPage]);
+
 
   useEffect(() => {
     if (previewIndex < 0 || sortedImages.length <= 1) return;
@@ -1000,7 +1006,12 @@ export default function App() {
                     totalPages={galleryTotalPages}
                     totalItems={galleryTotalItems}
                     isLoading={isGalleryLoading}
-                    onPageChange={setGalleryPage}
+                    onPageChange={(page) =>
+                      setSearchParams(
+                        page > 1 ? { page: String(page) } : {},
+                        { replace: true },
+                      )
+                    }
                     selectedId={selectedId}
                     onSelect={(id) => {
                       const nextId = id === selectedId ? null : id;
