@@ -328,3 +328,27 @@
     font-size: 33px;
   }
 }
+
+.bulkDeleteOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.bulkDeleteSpinner {
+  width: 56px;
+  height: 56px;
+  border: 5px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: bulkDeleteSpin 0.75s linear infinite;
+}
+
+@keyframes bulkDeleteSpin {
+  to { transform: rotate(360deg); }
+}

@@ -122,6 +122,8 @@ const appText = {
     deleteImageBody: (name: string) =>
       `Are you sure you want to delete "${name}"?`,
     delete: "Delete",
+    bulkDeleteTitle: (n: number) => `Delete ${n} image${n !== 1 ? "s" : ""}?`,
+    bulkDeleteBody: (n: number) => `Are you sure you want to delete ${n} image${n !== 1 ? "s" : ""}? This cannot be undone.`,
     switchToEnglish: "Switch to English",
     switchToSwedish: "Switch to Swedish",
     createdBy: "Created by",
@@ -175,6 +177,8 @@ const appText = {
     deleteImageBody: (name: string) =>
       `Ar du saker pa att du vill ta bort "${name}"?`,
     delete: "Ta bort",
+    bulkDeleteTitle: (n: number) => `Ta bort ${n} bild${n !== 1 ? "er" : ""}?`,
+    bulkDeleteBody: (n: number) => `Ar du saker pa att du vill ta bort ${n} bild${n !== 1 ? "er" : ""}? Detta kan inte angras.`,
     switchToEnglish: "Byt till engelska",
     switchToSwedish: "Byt till svenska",
     createdBy: "Skapad av",
@@ -220,6 +224,7 @@ export default function App() {
     setGalleryPage,
     addImages,
     removeImage,
+    removeImages,
     updateImageMetadata,
   } = activeGallery;
   const mapImageMatch = useMatch("/map/image/:id");
@@ -278,6 +283,10 @@ export default function App() {
   const [uploadProgress, setUploadProgress] =
     useState<UploadProgressState | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [bulkSelectMode, setBulkSelectMode] = useState(false);
+  const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(() => new Set());
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const t = appText[locale];
 
   const handleUploadProgress = useCallback((update: UploadProgressUpdate) => {
@@ -549,6 +558,36 @@ export default function App() {
 
     removeImage(deleteCandidate.id, authToken);
     setDeleteCandidateId(null);
+  };
+
+  const handleToggleBulkSelectMode = () => {
+    setBulkSelectMode((prev) => !prev);
+    setSelectedImageIds(new Set());
+  };
+
+  const handleToggleImageSelect = (id: string) => {
+    setSelectedImageIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    const ids = Array.from(selectedImageIds);
+    setIsBulkDeleteOpen(false);
+    setIsBulkDeleting(true);
+    try {
+      await removeImages(ids, authToken ?? undefined);
+    } finally {
+      setIsBulkDeleting(false);
+      setSelectedImageIds(new Set());
+      setBulkSelectMode(false);
+    }
   };
 
   const handlePreviewStep = (direction: -1 | 1) => {
@@ -1067,6 +1106,11 @@ export default function App() {
                     isAuthenticated={Boolean(authToken)}
                     locale={locale}
                     showTopPager={isKidsMode}
+                    bulkSelectMode={bulkSelectMode}
+                    selectedImageIds={selectedImageIds}
+                    onToggleBulkSelectMode={handleToggleBulkSelectMode}
+                    onToggleImageSelect={handleToggleImageSelect}
+                    onBulkDelete={() => setIsBulkDeleteOpen(true)}
                     uploadSlot={
                       <ImageUpload
                         onFilesSelected={handleFilesSelected}
@@ -1367,6 +1411,28 @@ export default function App() {
       </Dialog>
 
       <Dialog
+        open={isBulkDeleteOpen}
+        onClose={() => setIsBulkDeleteOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>{t.bulkDeleteTitle(selectedImageIds.size)}</DialogTitle>
+        <DialogContent>
+          <p>{t.bulkDeleteBody(selectedImageIds.size)}</p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsBulkDeleteOpen(false)}>{t.cancel}</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleConfirmBulkDelete}
+          >
+            {t.delete}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
         open={metadataCandidate !== null}
         onClose={() => {
           if (!isSavingMetadata) {
@@ -1575,6 +1641,12 @@ export default function App() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {isBulkDeleting && (
+        <div className={styles.bulkDeleteOverlay}>
+          <div className={styles.bulkDeleteSpinner} />
+        </div>
+      )}
     </div>
   );
 }

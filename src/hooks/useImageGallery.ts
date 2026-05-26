@@ -320,6 +320,23 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
     [galleryPage, galleryPageSize, refreshGalleryPage],
   );
 
+  const removeImages = useCallback(
+    async (ids: string[], authToken?: string): Promise<void> => {
+      setImages((prev) => prev.filter((img) => !ids.includes(img.id)));
+      setSelectedId((prev) => (prev && ids.includes(prev) ? null : prev));
+
+      try {
+        for (const id of ids) {
+          await deleteImageFromServer(id, authToken);
+        }
+        await refreshGalleryPage(galleryPage, galleryPageSize);
+      } catch {
+        await refreshGalleryPage(galleryPage, galleryPageSize).catch(() => {});
+      }
+    },
+    [galleryPage, galleryPageSize, refreshGalleryPage],
+  );
+
   const updateImageMetadata = useCallback(
     async (id: string, update: ImageMetadataUpdate, authToken?: string) => {
       const updated = await updateImageMetadataOnServer(id, update, authToken);
@@ -363,6 +380,7 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
     setGalleryPageSize: setGalleryItemsPerPage,
     addImages,
     removeImage,
+    removeImages,
     updateImageMetadata,
     updateLocation,
   };

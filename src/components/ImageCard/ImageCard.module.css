@@ -242,3 +242,32 @@
 .removeBtn:hover {
   color: #dc2626;
 }
+
+.checked {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.45);
+}
+
+.checkOverlay {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #fff;
+  font-weight: 700;
+  z-index: 2;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.checkOverlayChecked {
+  background: #4f46e5;
+  border-color: #4f46e5;
+}

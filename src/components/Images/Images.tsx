@@ -22,6 +22,11 @@ interface ImagesProps {
   locale: Locale;
   uploadSlot?: React.ReactNode;
   showTopPager?: boolean;
+  bulkSelectMode?: boolean;
+  selectedImageIds?: Set<string>;
+  onToggleBulkSelectMode?: () => void;
+  onToggleImageSelect?: (id: string) => void;
+  onBulkDelete?: () => void;
 }
 
 export default function Images({
@@ -41,6 +46,11 @@ export default function Images({
   locale,
   uploadSlot,
   showTopPager = false,
+  bulkSelectMode = false,
+  selectedImageIds,
+  onToggleBulkSelectMode,
+  onToggleImageSelect,
+  onBulkDelete,
 }: ImagesProps) {
   const t =
     locale === "sv"
@@ -51,6 +61,9 @@ export default function Images({
           previous: "Forra sidan",
           next: "Nasta sidan",
           goToPage: (target: number) => `Gå till sida ${target}`,
+          select: "Välj",
+          cancelSelect: "Avbryt",
+          deleteSelected: (n: number) => `Ta bort ${n} bild${n !== 1 ? "er" : ""}`,
         }
       : {
           empty: "No images yet - upload some above!",
@@ -59,6 +72,9 @@ export default function Images({
           previous: "Previous page",
           next: "Next page",
           goToPage: (target: number) => `Go to page ${target}`,
+          select: "Select",
+          cancelSelect: "Cancel",
+          deleteSelected: (n: number) => `Delete ${n} image${n !== 1 ? "s" : ""}`,
         };
 
   const hasImages = totalItems > 0;
@@ -127,9 +143,31 @@ export default function Images({
     </div>
   );
 
+  const checkedCount = selectedImageIds?.size ?? 0;
+
   return (
     <section aria-label={t.aria}>
       {showTopPager && renderPager(totalItems === 0)}
+      {isAuthenticated && totalItems > 0 && (
+        <div className={styles.bulkToolbar}>
+          <button
+            type="button"
+            className={styles.selectToggleBtn}
+            onClick={onToggleBulkSelectMode}
+          >
+            {bulkSelectMode ? t.cancelSelect : t.select}
+          </button>
+          {bulkSelectMode && checkedCount > 0 && (
+            <button
+              type="button"
+              className={styles.bulkDeleteBtn}
+              onClick={onBulkDelete}
+            >
+              {t.deleteSelected(checkedCount)}
+            </button>
+          )}
+        </div>
+      )}
       <div className={styles.gallery}>
         {uploadSlot}
         {sortedImages.map((image) => (
@@ -144,6 +182,9 @@ export default function Images({
             onEditMetadata={onEditMetadata}
             isAuthenticated={isAuthenticated}
             locale={locale}
+            bulkSelectMode={bulkSelectMode}
+            isChecked={selectedImageIds?.has(image.id) ?? false}
+            onToggleCheck={onToggleImageSelect}
           />
         ))}
       </div>

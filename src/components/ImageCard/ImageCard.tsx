@@ -13,6 +13,9 @@ interface ImageCardProps {
   onEditMetadata: (id: string) => void;
   isAuthenticated?: boolean;
   locale: Locale;
+  bulkSelectMode?: boolean;
+  isChecked?: boolean;
+  onToggleCheck?: (id: string) => void;
 }
 
 function formatBytes(bytes: number): string {
@@ -31,6 +34,9 @@ export default function ImageCard({
   onEditMetadata,
   isAuthenticated = false,
   locale,
+  bulkSelectMode = false,
+  isChecked = false,
+  onToggleCheck,
 }: ImageCardProps) {
   const t =
     locale === "sv"
@@ -55,17 +61,30 @@ export default function ImageCard({
           removeTitle: "Remove image",
         };
 
+  const handleClick = () => {
+    if (bulkSelectMode) {
+      onToggleCheck?.(image.id);
+    } else {
+      onSelect(image.id);
+    }
+  };
+
   return (
     <article
-      className={`${styles.card} ${isSelected ? styles.selected : ""}`}
-      onClick={() => onSelect(image.id)}
+      className={`${styles.card} ${isSelected && !bulkSelectMode ? styles.selected : ""} ${bulkSelectMode && isChecked ? styles.checked : ""}`}
+      onClick={handleClick}
       tabIndex={0}
       role="button"
-      aria-pressed={isSelected}
+      aria-pressed={bulkSelectMode ? isChecked : isSelected}
       aria-label={t.selectImage(image.name)}
-      onKeyDown={(e) => e.key === "Enter" && onSelect(image.id)}
+      onKeyDown={(e) => e.key === "Enter" && handleClick()}
     >
       <div className={styles.imageWrapper}>
+        {bulkSelectMode && (
+          <span className={`${styles.checkOverlay} ${isChecked ? styles.checkOverlayChecked : ""}`}>
+            {isChecked ? "✓" : ""}
+          </span>
+        )}
         <img
           src={image.thumbnailUrl || image.dataUrl}
           alt={image.name}
