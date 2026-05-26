@@ -86,6 +86,7 @@ const appText = {
     sheriffenTab: (count: number) => `Sheriffen (${count})`,
     kidsTab: (count: number) => `Kids (${count})`,
     resorTab: (count: number) => `Trips (${count})`,
+    kidsLoginRequired: "Log in to view this gallery",
     uploadLoginTitle: "Upload Login",
     username: "Username",
     password: "Password",
@@ -138,6 +139,7 @@ const appText = {
     sheriffenTab: (count: number) => `Sheriffen (${count})`,
     kidsTab: (count: number) => `Barnen (${count})`,
     resorTab: (count: number) => `Resor (${count})`,
+    kidsLoginRequired: "Logga in för att se bilderna",
     uploadLoginTitle: "Inloggning för uppladdning",
     username: "Användarnamn",
     password: "Lösenord",
@@ -912,6 +914,23 @@ export default function App() {
       {isKidsMode && (
         <header className={styles.kidsHeader}>
           <span className={styles.kidsHeaderTitle}>Familjealbum</span>
+          {authToken ? (
+            <button
+              type="button"
+              className={`${styles.kidsAuthBtn} ${styles.kidsLogoutBtn}`}
+              onClick={handleLogout}
+            >
+              {t.logout}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`${styles.kidsAuthBtn} ${styles.kidsLoginBtn}`}
+              onClick={() => { setAuthError(null); setIsLoginOpen(true); }}
+            >
+              {t.loginToUpload}
+            </button>
+          )}
         </header>
       )}
       <main className={styles.main}>
@@ -1011,6 +1030,11 @@ export default function App() {
                       <Tab value="resor" label={t.resorTab(resorGallery.galleryTotalItems)} />
                     </Tabs>
                   )}
+                  {isKidsMode && !authToken ? (
+                    <div className={styles.kidsLoginPrompt}>
+                      <span>{t.kidsLoginRequired}</span>
+                    </div>
+                  ) : (
                   <Images
                     images={galleryPageImages}
                     page={galleryPage}
@@ -1055,6 +1079,7 @@ export default function App() {
                       />
                     }
                   />
+                  )}
                 </>
               ) : (
                 <div className={styles.mapWrapper}>

@@ -224,9 +224,10 @@
 
 /* ── Footer ── */
 .kidsHeader {
-  text-align: center;
-  padding: 1rem;
-  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1.25rem;
   color: var(--footer-text);
   border-bottom: 1px solid var(--footer-border);
   background: var(--footer-bg);
@@ -236,6 +237,46 @@
   color: #e85d2c;
   font-weight: 600;
   font-size: 1rem;
+}
+
+.kidsAuthBtn {
+  border-radius: 6px;
+  padding: 0.32rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1.4;
+}
+
+.kidsLoginBtn {
+  background: none;
+  border: 1px solid rgba(232, 93, 44, 0.45);
+  color: #e85d2c;
+}
+
+.kidsLoginBtn:hover {
+  background: rgba(232, 93, 44, 0.1);
+}
+
+.kidsLogoutBtn {
+  background: none;
+  border: 1px solid rgba(107, 114, 128, 0.35);
+  color: #6b7280;
+}
+
+.kidsLogoutBtn:hover {
+  background: rgba(107, 114, 128, 0.08);
+  color: #374151;
+}
+
+.kidsLoginPrompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  color: #9ca3af;
+  font-size: 0.92rem;
 }
 
 .footer {
