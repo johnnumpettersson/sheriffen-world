@@ -909,6 +909,11 @@ export default function App() {
         } as React.CSSProperties
       }
     >
+      {isKidsMode && (
+        <header className={styles.kidsHeader}>
+          <span className={styles.kidsHeaderTitle}>Familjealbum</span>
+        </header>
+      )}
       <main className={styles.main}>
         {!isKidsMode && (
           <div className={styles.heroBanner}>

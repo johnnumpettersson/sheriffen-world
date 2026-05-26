@@ -223,6 +223,21 @@
 }
 
 /* ── Footer ── */
+.kidsHeader {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.78rem;
+  color: var(--footer-text);
+  border-bottom: 1px solid var(--footer-border);
+  background: var(--footer-bg);
+}
+
+.kidsHeaderTitle {
+  color: #e85d2c;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
 .footer {
   text-align: center;
   padding: 1rem;

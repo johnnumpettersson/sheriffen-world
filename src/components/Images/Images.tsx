@@ -80,8 +80,54 @@ export default function Images({
     );
   }
 
+  const pager = totalItems > 0 ? (
+    <div className={styles.pagerRow}>
+      <div className={styles.pageControls}>
+        <button
+          type="button"
+          className={styles.pagerButton}
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+          disabled={page <= 1 || isLoading}
+          aria-label={t.previous}
+          title={t.previous}
+        >
+          ←
+        </button>
+
+        <div className={styles.pageNumberGroup}>
+          {pageButtons.map((pageNumber) => (
+            <button
+              key={pageNumber}
+              type="button"
+              className={`${styles.pageNumberButton} ${pageNumber === page ? styles.pageNumberButtonActive : ""}`}
+              onClick={() => onPageChange(pageNumber)}
+              disabled={isLoading}
+              aria-current={pageNumber === page ? "page" : undefined}
+              aria-label={t.goToPage(pageNumber)}
+              title={t.goToPage(pageNumber)}
+            >
+              {pageNumber}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className={styles.pagerButton}
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+          disabled={page >= totalPages || isLoading || !hasImages}
+          aria-label={t.next}
+          title={t.next}
+        >
+          →
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <section aria-label={t.aria}>
+      {pager}
       <div className={styles.gallery}>
         {uploadSlot}
         {sortedImages.map((image) => (
@@ -99,50 +145,7 @@ export default function Images({
           />
         ))}
       </div>
-
-      {totalItems > 0 && <div className={styles.pagerRow}>
-        <div className={styles.pageControls}>
-          <button
-            type="button"
-            className={styles.pagerButton}
-            onClick={() => onPageChange(Math.max(1, page - 1))}
-            disabled={page <= 1 || isLoading}
-            aria-label={t.previous}
-            title={t.previous}
-          >
-            ←
-          </button>
-
-          <div className={styles.pageNumberGroup}>
-            {pageButtons.map((pageNumber) => (
-              <button
-                key={pageNumber}
-                type="button"
-                className={`${styles.pageNumberButton} ${pageNumber === page ? styles.pageNumberButtonActive : ""}`}
-                onClick={() => onPageChange(pageNumber)}
-                disabled={isLoading}
-                aria-current={pageNumber === page ? "page" : undefined}
-                aria-label={t.goToPage(pageNumber)}
-                title={t.goToPage(pageNumber)}
-              >
-                {pageNumber}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            className={styles.pagerButton}
-            onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-            disabled={page >= totalPages || isLoading || !hasImages}
-            aria-label={t.next}
-            title={t.next}
-          >
-            →
-          </button>
-        </div>
-
-      </div>}
+      {pager}
     </section>
   );
 }
