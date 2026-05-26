@@ -174,7 +174,7 @@ export default function Images({
       {((isAuthenticated && totalItems > 0) || toolbarSlot) && (
         <div className={styles.bulkToolbar}>
           <div className={styles.toolbarLeft}>{toolbarSlot}</div>
-          {checkedCount > 0 && (
+          {isAuthenticated && checkedCount > 0 && (
             <button
               type="button"
               className={styles.trashBtn}
@@ -187,7 +187,7 @@ export default function Images({
               </svg>
             </button>
           )}
-          <div className={styles.menuWrapper} ref={menuRef}>
+          {isAuthenticated && <div className={styles.menuWrapper} ref={menuRef}>
             <button
               type="button"
               className={styles.menuTrigger}
@@ -217,7 +217,7 @@ export default function Images({
                 </button>
               </div>
             )}
-          </div>
+          </div>}
         </div>
       )}
       <div className={styles.gallery}>
