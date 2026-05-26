@@ -998,7 +998,6 @@ export default function App() {
                   >
                     <Tab value="main" label={t.sheriffenTab(mainGallery.galleryTotalItems)} />
                     <Tab value="resor" label={t.resorTab(resorGallery.galleryTotalItems)} />
-                    <Tab value="kids" label={t.kidsTab(kidsGallery.galleryTotalItems)} />
                   </Tabs>
                   <Images
                     images={galleryPageImages}
