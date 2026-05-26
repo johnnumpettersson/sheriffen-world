@@ -984,7 +984,7 @@ export default function App() {
                       variant="dot"
                       invisible={!hasUnseenUploads}
                     >
-                      <span>{t.galleryTab(mainGallery.galleryTotalItems + kidsGallery.galleryTotalItems + resorGallery.galleryTotalItems)}</span>
+                      <span>{t.galleryTab(mainGallery.galleryTotalItems + resorGallery.galleryTotalItems)}</span>
                     </Badge>
                   }
                 />
