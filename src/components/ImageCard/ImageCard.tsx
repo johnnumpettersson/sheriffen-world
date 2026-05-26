@@ -71,7 +71,7 @@ export default function ImageCard({
 
   return (
     <article
-      className={`${styles.card} ${isSelected && !bulkSelectMode ? styles.selected : ""} ${bulkSelectMode && isChecked ? styles.checked : ""}`}
+      className={`${styles.card} ${isSelected && !bulkSelectMode ? styles.selected : ""} ${isChecked ? styles.checked : ""}`}
       onClick={handleClick}
       tabIndex={0}
       role="button"
@@ -80,7 +80,14 @@ export default function ImageCard({
       onKeyDown={(e) => e.key === "Enter" && handleClick()}
     >
       {bulkSelectMode && (
-        <span className={`${styles.checkOverlay} ${isChecked ? styles.checkOverlayChecked : ""}`}>
+        <span
+          className={`${styles.checkOverlay} ${isChecked ? styles.checkOverlayChecked : ""}`}
+          onClick={(e) => { e.stopPropagation(); onToggleCheck?.(image.id); }}
+          role="checkbox"
+          aria-checked={isChecked}
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); onToggleCheck?.(image.id); } }}
+        >
           {isChecked ? "✓" : ""}
         </span>
       )}

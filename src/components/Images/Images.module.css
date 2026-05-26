@@ -129,39 +129,126 @@
 .bulkToolbar {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  justify-content: flex-end;
   margin-bottom: 0.75rem;
 }
 
-.selectToggleBtn {
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(148, 163, 184, 0.1);
-  color: #374151;
+.trashBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(220, 38, 38, 0.45);
   border-radius: 8px;
-  padding: 0.3rem 0.8rem;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.selectToggleBtn:hover {
-  background: rgba(148, 163, 184, 0.22);
-  border-color: rgba(148, 163, 184, 0.8);
-}
-
-.bulkDeleteBtn {
-  border: 1px solid rgba(220, 38, 38, 0.5);
-  background: rgba(220, 38, 38, 0.1);
+  background: rgba(220, 38, 38, 0.08);
   color: #dc2626;
-  border-radius: 8px;
-  padding: 0.3rem 0.8rem;
-  font-size: 0.8rem;
-  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
+  padding: 0;
 }
 
-.bulkDeleteBtn:hover {
-  background: rgba(220, 38, 38, 0.2);
-  border-color: rgba(220, 38, 38, 0.8);
+.trashBtn:hover {
+  background: rgba(220, 38, 38, 0.18);
+  border-color: rgba(220, 38, 38, 0.7);
+}
+
+.menuWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.menuTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  letter-spacing: 0;
+  color: #6b7280;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.menuTrigger:hover {
+  background: rgba(148, 163, 184, 0.15);
+  color: #374151;
+}
+
+.menuTriggerActive {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.45);
+  color: #4f46e5;
+}
+
+.menuDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 170px;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  color: #1f2937;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.menuItem:hover {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.menuItemCancel {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.menuItemCancel:hover {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.menuItemDelete {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #dc2626;
+  cursor: pointer;
+  border-top: 1px solid rgba(220, 38, 38, 0.15);
+  transition: background 0.12s;
+}
+
+.menuItemDelete:hover {
+  background: rgba(220, 38, 38, 0.07);
 }
