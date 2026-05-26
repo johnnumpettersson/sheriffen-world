@@ -35,7 +35,7 @@ import type { ImageExif } from "./utils/compressImage";
 import { useNavigate, useMatch } from "react-router-dom";
 import styles from "./App.module.css";
 
-type Tab = "gallery" | "map" | "kids";
+type Tab = "gallery" | "map" | "kids" | "resor";
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(
   /\/$/,
   "",
@@ -85,6 +85,7 @@ const appText = {
     galleryTab: (count: number) => `Images (${count})`,
     sheriffenTab: (count: number) => `Sheriffen (${count})`,
     kidsTab: (count: number) => `Kids (${count})`,
+    resorTab: (count: number) => `Trips (${count})`,
     uploadLoginTitle: "Upload Login",
     username: "Username",
     password: "Password",
@@ -136,6 +137,7 @@ const appText = {
     galleryTab: (count: number) => `Bilder (${count})`,
     sheriffenTab: (count: number) => `Sheriffen (${count})`,
     kidsTab: (count: number) => `Barnen (${count})`,
+    resorTab: (count: number) => `Resor (${count})`,
     uploadLoginTitle: "Inloggning för uppladdning",
     username: "Användarnamn",
     password: "Lösenord",
@@ -192,13 +194,15 @@ export default function App() {
   const theme = useTheme();
   const mainGallery = useImageGallery("main");
   const kidsGallery = useImageGallery("kids");
+  const resorGallery = useImageGallery("resor");
   const navigate = useNavigate();
   const galleryMatch = useMatch("/gallery/*");
   const kidsMatch = useMatch("/kids/*");
-  const activeTab: Tab = galleryMatch ? "gallery" : kidsMatch ? "kids" : "map";
-  const activeGallery = activeTab === "kids" ? kidsGallery : mainGallery;
-  const topTab: "gallery" | "map" = (galleryMatch || kidsMatch) ? "gallery" : "map";
-  const gallerySubTab: "main" | "kids" = kidsMatch ? "kids" : "main";
+  const resorMatch = useMatch("/resor/*");
+  const activeTab: Tab = galleryMatch ? "gallery" : kidsMatch ? "kids" : resorMatch ? "resor" : "map";
+  const activeGallery = activeTab === "kids" ? kidsGallery : activeTab === "resor" ? resorGallery : mainGallery;
+  const topTab: "gallery" | "map" = (galleryMatch || kidsMatch || resorMatch) ? "gallery" : "map";
+  const gallerySubTab: "main" | "kids" | "resor" = kidsMatch ? "kids" : resorMatch ? "resor" : "main";
   const {
     images,
     galleryPageImages,
@@ -216,6 +220,7 @@ export default function App() {
   const mapImageMatch = useMatch("/map/image/:id");
   const galleryImageMatch = useMatch("/gallery/image/:id");
   const kidsImageMatch = useMatch("/kids/image/:id");
+  const resorImageMatch = useMatch("/resor/image/:id");
   const [newUploadCount, setNewUploadCount] = useState(0);
   const [carouselResetSignal, setCarouselResetSignal] = useState(0);
   const [unpreviewedImageIds, setUnpreviewedImageIds] = useState<Set<string>>(
@@ -229,7 +234,7 @@ export default function App() {
   const [previewFadeKey, setPreviewFadeKey] = useState(0);
   const previewFadeActiveRef = useRef(false);
   const [mapPreviewMode, setMapPreviewMode] = useState(false);
-  const previewImageId = mapImageMatch?.params.id ?? galleryImageMatch?.params.id ?? kidsImageMatch?.params.id ?? null;
+  const previewImageId = mapImageMatch?.params.id ?? galleryImageMatch?.params.id ?? kidsImageMatch?.params.id ?? resorImageMatch?.params.id ?? null;
   const [authToken, setAuthToken] = useState<string | null>(() =>
     localStorage.getItem(AUTH_STORAGE_KEY),
   );
@@ -873,10 +878,10 @@ export default function App() {
   }, [previewImageId]);
 
   useEffect(() => {
-    if (kidsMatch && !authToken) {
+    if ((kidsMatch || resorMatch) && !authToken) {
       navigate("/gallery", { replace: true });
     }
-  }, [kidsMatch, authToken, navigate]);
+  }, [kidsMatch, resorMatch, authToken, navigate]);
 
   useEffect(() => {
     if (previewIndex < 0 || sortedImages.length <= 1) return;
@@ -950,7 +955,7 @@ export default function App() {
                     variant="dot"
                     invisible={!hasUnseenUploads}
                   >
-                    <span>{t.galleryTab(mainGallery.galleryTotalItems + (authToken ? kidsGallery.galleryTotalItems : 0))}</span>
+                    <span>{t.galleryTab(mainGallery.galleryTotalItems + (authToken ? kidsGallery.galleryTotalItems + resorGallery.galleryTotalItems : 0))}</span>
                   </Badge>
                 }
               />
@@ -982,14 +987,17 @@ export default function App() {
                   {authToken && (
                     <Tabs
                       value={gallerySubTab}
-                      onChange={(_, value: "main" | "kids") => {
-                        navigate(value === "kids" ? "/kids" : "/gallery");
+                      onChange={(_, value: "main" | "kids" | "resor") => {
+                        if (value === "kids") navigate("/kids");
+                        else if (value === "resor") navigate("/resor");
+                        else navigate("/gallery");
                       }}
                       textColor="secondary"
                       indicatorColor="secondary"
                       sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}
                     >
                       <Tab value="main" label={t.sheriffenTab(mainGallery.galleryTotalItems)} />
+                      <Tab value="resor" label={t.resorTab(resorGallery.galleryTotalItems)} />
                       <Tab value="kids" label={t.kidsTab(kidsGallery.galleryTotalItems)} />
                     </Tabs>
                   )}

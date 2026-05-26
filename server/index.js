@@ -74,7 +74,7 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 
 const MANIFEST_OBJECT = "manifest.json";
-const VALID_GALLERIES = new Set(["main", "kids"]);
+const VALID_GALLERIES = new Set(["main", "kids", "resor"]);
 const GEOCODE_CACHE_OBJECT = "geocode-cache.json";
 const DEFAULT_CHUNK_SIZE_BYTES = 8 * 1024 * 1024;
 const CHUNK_SIZE_BYTES = Number.isFinite(
