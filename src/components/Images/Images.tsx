@@ -27,6 +27,7 @@ interface ImagesProps {
   onToggleBulkSelectMode?: () => void;
   onToggleImageSelect?: (id: string) => void;
   onBulkDelete?: () => void;
+  onMarkAllPage?: () => void;
 }
 
 export default function Images({
@@ -51,6 +52,7 @@ export default function Images({
   onToggleBulkSelectMode,
   onToggleImageSelect,
   onBulkDelete,
+  onMarkAllPage,
 }: ImagesProps) {
   const t =
     locale === "sv"
@@ -64,6 +66,8 @@ export default function Images({
           select: "Välj",
           cancelSelect: "Avbryt",
           deleteSelected: (n: number) => `Ta bort ${n} bild${n !== 1 ? "er" : ""}`,
+          markAll: "Markera alla",
+          unmarkAll: "Avmarkera alla",
         }
       : {
           empty: "No images yet - upload some above!",
@@ -75,6 +79,8 @@ export default function Images({
           select: "Select",
           cancelSelect: "Cancel",
           deleteSelected: (n: number) => `Delete ${n} image${n !== 1 ? "s" : ""}`,
+          markAll: "Mark all",
+          unmarkAll: "Unmark all",
         };
 
   const hasImages = totalItems > 0;
@@ -144,6 +150,7 @@ export default function Images({
   );
 
   const checkedCount = selectedImageIds?.size ?? 0;
+  const allPageSelected = sortedImages.length > 0 && sortedImages.every((img) => selectedImageIds?.has(img.id));
 
   return (
     <section aria-label={t.aria}>
@@ -157,6 +164,15 @@ export default function Images({
           >
             {bulkSelectMode ? t.cancelSelect : t.select}
           </button>
+          {bulkSelectMode && (
+            <button
+              type="button"
+              className={styles.selectToggleBtn}
+              onClick={onMarkAllPage}
+            >
+              {allPageSelected ? t.unmarkAll : t.markAll}
+            </button>
+          )}
           {bulkSelectMode && checkedCount > 0 && (
             <button
               type="button"

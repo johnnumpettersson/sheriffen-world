@@ -79,12 +79,12 @@ export default function ImageCard({
       aria-label={t.selectImage(image.name)}
       onKeyDown={(e) => e.key === "Enter" && handleClick()}
     >
+      {bulkSelectMode && (
+        <span className={`${styles.checkOverlay} ${isChecked ? styles.checkOverlayChecked : ""}`}>
+          {isChecked ? "✓" : ""}
+        </span>
+      )}
       <div className={styles.imageWrapper}>
-        {bulkSelectMode && (
-          <span className={`${styles.checkOverlay} ${isChecked ? styles.checkOverlayChecked : ""}`}>
-            {isChecked ? "✓" : ""}
-          </span>
-        )}
         <img
           src={image.thumbnailUrl || image.dataUrl}
           alt={image.name}

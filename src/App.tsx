@@ -577,6 +577,20 @@ export default function App() {
     });
   };
 
+  const handleMarkAllPage = () => {
+    const pageIds = galleryPageImages.map((img) => img.id);
+    const allSelected = pageIds.every((id) => selectedImageIds.has(id));
+    if (allSelected) {
+      setSelectedImageIds((prev) => {
+        const next = new Set(prev);
+        pageIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelectedImageIds((prev) => new Set([...prev, ...pageIds]));
+    }
+  };
+
   const handleConfirmBulkDelete = async () => {
     const ids = Array.from(selectedImageIds);
     setIsBulkDeleteOpen(false);
@@ -1111,6 +1125,7 @@ export default function App() {
                     onToggleBulkSelectMode={handleToggleBulkSelectMode}
                     onToggleImageSelect={handleToggleImageSelect}
                     onBulkDelete={() => setIsBulkDeleteOpen(true)}
+                    onMarkAllPage={handleMarkAllPage}
                     uploadSlot={
                       <ImageUpload
                         onFilesSelected={handleFilesSelected}
