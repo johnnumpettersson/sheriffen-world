@@ -35,7 +35,7 @@ import type { ImageExif } from "./utils/compressImage";
 import { useNavigate, useMatch } from "react-router-dom";
 import styles from "./App.module.css";
 
-type Tab = "gallery" | "map";
+type Tab = "gallery" | "map" | "kids";
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(
   /\/$/,
   "",
@@ -83,6 +83,8 @@ const appText = {
     selectedLabel: (name: string) => `Selected: ${name}`,
     worldMapTab: (count: number) => `World Map${count ? ` (${count})` : ""}`,
     galleryTab: (count: number) => `Images (${count})`,
+    sheriffenTab: (count: number) => `Sheriffen (${count})`,
+    kidsTab: (count: number) => `Kids (${count})`,
     uploadLoginTitle: "Upload Login",
     username: "Username",
     password: "Password",
@@ -132,6 +134,8 @@ const appText = {
     selectedLabel: (name: string) => `Vald: ${name}`,
     worldMapTab: (count: number) => `Världskartan${count ? ` (${count})` : ""}`,
     galleryTab: (count: number) => `Bilder (${count})`,
+    sheriffenTab: (count: number) => `Sheriffen (${count})`,
+    kidsTab: (count: number) => `Barnen (${count})`,
     uploadLoginTitle: "Inloggning för uppladdning",
     username: "Användarnamn",
     password: "Lösenord",
@@ -186,6 +190,15 @@ function getFlagComponent(countryCode: string) {
 
 export default function App() {
   const theme = useTheme();
+  const mainGallery = useImageGallery("main");
+  const kidsGallery = useImageGallery("kids");
+  const navigate = useNavigate();
+  const galleryMatch = useMatch("/gallery/*");
+  const kidsMatch = useMatch("/kids/*");
+  const activeTab: Tab = galleryMatch ? "gallery" : kidsMatch ? "kids" : "map";
+  const activeGallery = activeTab === "kids" ? kidsGallery : mainGallery;
+  const topTab: "gallery" | "map" = (galleryMatch || kidsMatch) ? "gallery" : "map";
+  const gallerySubTab: "main" | "kids" = kidsMatch ? "kids" : "main";
   const {
     images,
     galleryPageImages,
@@ -199,12 +212,10 @@ export default function App() {
     addImages,
     removeImage,
     updateImageMetadata,
-  } = useImageGallery();
-  const navigate = useNavigate();
-  const galleryMatch = useMatch("/gallery/*");
-  const activeTab: Tab = galleryMatch ? "gallery" : "map";
+  } = activeGallery;
   const mapImageMatch = useMatch("/map/image/:id");
   const galleryImageMatch = useMatch("/gallery/image/:id");
+  const kidsImageMatch = useMatch("/kids/image/:id");
   const [newUploadCount, setNewUploadCount] = useState(0);
   const [carouselResetSignal, setCarouselResetSignal] = useState(0);
   const [unpreviewedImageIds, setUnpreviewedImageIds] = useState<Set<string>>(
@@ -218,7 +229,7 @@ export default function App() {
   const [previewFadeKey, setPreviewFadeKey] = useState(0);
   const previewFadeActiveRef = useRef(false);
   const [mapPreviewMode, setMapPreviewMode] = useState(false);
-  const previewImageId = mapImageMatch?.params.id ?? galleryImageMatch?.params.id ?? null;
+  const previewImageId = mapImageMatch?.params.id ?? galleryImageMatch?.params.id ?? kidsImageMatch?.params.id ?? null;
   const [authToken, setAuthToken] = useState<string | null>(() =>
     localStorage.getItem(AUTH_STORAGE_KEY),
   );
@@ -342,7 +353,7 @@ export default function App() {
           return next;
         });
 
-        if (activeTab === "gallery") {
+        if (activeTab === "gallery" || activeTab === "kids") {
           setNewUploadCount(0);
           return;
         }
@@ -463,8 +474,8 @@ export default function App() {
     [images],
   );
 
-  const imagesWithLocation = images.filter((img) => img.location !== null);
-  const hasUnseenUploads = newUploadCount > 0 && activeTab !== "gallery";
+  const imagesWithLocation = mainGallery.images.filter((img) => img.location !== null);
+  const hasUnseenUploads = newUploadCount > 0 && topTab !== "gallery";
   const deleteCandidate = deleteCandidateId
     ? (images.find((img) => img.id === deleteCandidateId) ?? null)
     : null;
@@ -862,6 +873,12 @@ export default function App() {
   }, [previewImageId]);
 
   useEffect(() => {
+    if (kidsMatch && !authToken) {
+      navigate("/gallery", { replace: true });
+    }
+  }, [kidsMatch, authToken, navigate]);
+
+  useEffect(() => {
     if (previewIndex < 0 || sortedImages.length <= 1) return;
     for (const dir of [-1, 1]) {
       const idx = (previewIndex + dir + sortedImages.length) % sortedImages.length;
@@ -912,13 +929,13 @@ export default function App() {
         <div className={styles.centerColumn}>
           <div className={styles.tabBar}>
             <Tabs
-              value={activeTab}
-              onChange={(_, value: Tab) => {
-                navigate(`/${value}`);
+              value={topTab}
+              onChange={(_, value: "gallery" | "map") => {
                 if (value === "gallery") {
+                  navigate("/gallery");
                   setNewUploadCount(0);
-                }
-                if (value === "map") {
+                } else {
+                  navigate("/map");
                   setCarouselResetSignal((prev) => prev + 1);
                 }
               }}
@@ -933,7 +950,7 @@ export default function App() {
                     variant="dot"
                     invisible={!hasUnseenUploads}
                   >
-                    <span>{t.galleryTab(images.length)}</span>
+                    <span>{t.galleryTab(mainGallery.galleryTotalItems + (authToken ? kidsGallery.galleryTotalItems : 0))}</span>
                   </Badge>
                 }
               />
@@ -960,49 +977,65 @@ export default function App() {
             </div>
           </div>
             <div className={styles.content}>
-              {activeTab === "gallery" ? (
-                <Images
-                  images={galleryPageImages}
-                  page={galleryPage}
-                  totalPages={galleryTotalPages}
-                  totalItems={galleryTotalItems}
-                  isLoading={isGalleryLoading}
-                  onPageChange={setGalleryPage}
-                  selectedId={selectedId}
-                  onSelect={(id) => {
-                    const nextId = id === selectedId ? null : id;
-                    previewFadeActiveRef.current = false;
-                    setMapPreviewMode(false);
-                    setSelectedId(nextId);
-                    if (nextId) {
-                      navigate(`/${activeTab}/image/${nextId}`);
-                      markImageAsPreviewed(nextId);
-                    } else {
-                      navigate(`/${activeTab}`);
+              {activeTab !== "map" ? (
+                <>
+                  {authToken && (
+                    <Tabs
+                      value={gallerySubTab}
+                      onChange={(_, value: "main" | "kids") => {
+                        navigate(value === "kids" ? "/kids" : "/gallery");
+                      }}
+                      textColor="secondary"
+                      indicatorColor="secondary"
+                      sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}
+                    >
+                      <Tab value="main" label={t.sheriffenTab(mainGallery.galleryTotalItems)} />
+                      <Tab value="kids" label={t.kidsTab(kidsGallery.galleryTotalItems)} />
+                    </Tabs>
+                  )}
+                  <Images
+                    images={galleryPageImages}
+                    page={galleryPage}
+                    totalPages={galleryTotalPages}
+                    totalItems={galleryTotalItems}
+                    isLoading={isGalleryLoading}
+                    onPageChange={setGalleryPage}
+                    selectedId={selectedId}
+                    onSelect={(id) => {
+                      const nextId = id === selectedId ? null : id;
+                      previewFadeActiveRef.current = false;
+                      setMapPreviewMode(false);
+                      setSelectedId(nextId);
+                      if (nextId) {
+                        navigate(`/${activeTab}/image/${nextId}`);
+                        markImageAsPreviewed(nextId);
+                      } else {
+                        navigate(`/${activeTab}`);
+                      }
+                    }}
+                    onRemove={setDeleteCandidateId}
+                    onEditMetadata={handleOpenMetadataEditor}
+                    unpreviewedImageIds={unpreviewedImageIds}
+                    recentlyPreviewedImageIds={recentlyPreviewedImageIds}
+                    isAuthenticated={Boolean(authToken)}
+                    locale={locale}
+                    uploadSlot={
+                      <ImageUpload
+                        onFilesSelected={handleFilesSelected}
+                        isProcessing={isUploading}
+                        isAuthenticated={Boolean(authToken)}
+                        onRequireLogin={() => { setAuthError(null); setIsLoginOpen(true); }}
+                        uploadProgress={uploadProgress}
+                        locale={locale}
+                        cardMode
+                      />
                     }
-                  }}
-                  onRemove={setDeleteCandidateId}
-                  onEditMetadata={handleOpenMetadataEditor}
-                  unpreviewedImageIds={unpreviewedImageIds}
-                  recentlyPreviewedImageIds={recentlyPreviewedImageIds}
-                  isAuthenticated={Boolean(authToken)}
-                  locale={locale}
-                  uploadSlot={
-                    <ImageUpload
-                      onFilesSelected={handleFilesSelected}
-                      isProcessing={isUploading}
-                      isAuthenticated={Boolean(authToken)}
-                      onRequireLogin={() => { setAuthError(null); setIsLoginOpen(true); }}
-                      uploadProgress={uploadProgress}
-                      locale={locale}
-                      cardMode
-                    />
-                  }
-                />
+                  />
+                </>
               ) : (
                 <div className={styles.mapWrapper}>
                   <MapView
-                    images={mapPreviewMode && previewImage ? [previewImage] : images}
+                    images={mapPreviewMode && previewImage ? [previewImage] : mainGallery.images}
                     selectedId={selectedId}
                     onSelectMarker={(id) =>
                       setSelectedId(id === selectedId ? null : id)
@@ -1027,7 +1060,7 @@ export default function App() {
             {activeTab === "map" && (
               <div className={styles.carouselWrapper}>
                 <CountriesList
-                  images={images}
+                  images={mainGallery.images}
                   onSelectLocation={handleSelectSidebarLocation}
                   locale={locale}
                   resetSignal={carouselResetSignal}

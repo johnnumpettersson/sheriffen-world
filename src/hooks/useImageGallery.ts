@@ -77,7 +77,7 @@ export interface UploadProgressUpdate {
   totalBytes: number;
 }
 
-export function useImageGallery() {
+export function useImageGallery(gallery: "main" | "kids" = "main") {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [galleryPage, setGalleryPage] = useState(1);
@@ -95,7 +95,7 @@ export function useImageGallery() {
   useEffect(() => {
     let cancelled = false;
 
-    fetchImagesFromServer()
+    fetchImagesFromServer(gallery)
       .then((serverImages) => {
         if (!cancelled) {
           setImages(serverImages.map(fromApiImageRecord));
@@ -108,7 +108,7 @@ export function useImageGallery() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [gallery]);
 
   const refreshGalleryPage = useCallback(
     async (pageToLoad: number, pageSizeToLoad: number) => {
@@ -120,6 +120,7 @@ export function useImageGallery() {
         const response = await fetchImagesPageFromServer(
           clampedPage,
           clampedPageSize,
+          gallery,
         );
 
         const pageImages = response.items.map(fromApiImageRecord);
@@ -142,7 +143,7 @@ export function useImageGallery() {
         setIsGalleryLoading(false);
       }
     },
-    [],
+    [gallery],
   );
 
   useEffect(() => {
@@ -244,6 +245,7 @@ export function useImageGallery() {
             takenAt,
             authToken,
             reportProgress,
+            gallery,
           );
           reportProgress(file.size);
           newImages.push(fromApiImageRecord(uploaded));
@@ -400,8 +402,8 @@ function resolveDataUrl(dataUrl: string): string {
   return `${API_BASE_URL}${dataUrl}`;
 }
 
-async function fetchImagesFromServer(): Promise<ApiImageRecord[]> {
-  const response = await fetch(`${API_BASE_URL}/api/images`, {
+async function fetchImagesFromServer(gallery: string): Promise<ApiImageRecord[]> {
+  const response = await fetch(`${API_BASE_URL}/api/images?gallery=${gallery}`, {
     cache: "no-store",
   });
   if (!response.ok) {
@@ -414,9 +416,10 @@ async function fetchImagesFromServer(): Promise<ApiImageRecord[]> {
 async function fetchImagesPageFromServer(
   page: number,
   pageSize: number,
+  gallery: string,
 ): Promise<ApiImagesPageResponse> {
   const response = await fetch(
-    `${API_BASE_URL}/api/images?page=${page}&pageSize=${pageSize}`,
+    `${API_BASE_URL}/api/images?page=${page}&pageSize=${pageSize}&gallery=${gallery}`,
     {
       cache: "no-store",
     },
@@ -474,6 +477,7 @@ async function uploadImageToServer(
   takenAt: Date | null,
   authToken?: string,
   onProgress?: (uploadedBytes: number) => void,
+  gallery: string = "main",
 ): Promise<ApiImageRecord> {
   if (!authToken) {
     throw new Error("Authentication required");
@@ -525,6 +529,7 @@ async function uploadImageToServer(
         type: file.type || "application/octet-stream",
         location,
         takenAt: takenAt ? takenAt.toISOString() : null,
+        gallery,
       }),
     });
 

@@ -74,6 +74,7 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 
 const MANIFEST_OBJECT = "manifest.json";
+const VALID_GALLERIES = new Set(["main", "kids"]);
 const GEOCODE_CACHE_OBJECT = "geocode-cache.json";
 const DEFAULT_CHUNK_SIZE_BYTES = 8 * 1024 * 1024;
 const CHUNK_SIZE_BYTES = Number.isFinite(
@@ -640,6 +641,7 @@ async function createChunkedUploadRecord(session) {
     size: session.size,
     type: session.type,
     mediaType: isVideoFile ? "video" : "image",
+    gallery: session.gallery ?? "main",
     ...(duration !== null && { duration }),
   };
 
@@ -1011,6 +1013,10 @@ app.post("/api/uploads/initiate", requireUploadAuth, async (req, res, next) => {
     const location = req.body?.location
       ? normalizeEditableLocation(req.body.location)
       : null;
+    const gallery =
+      typeof req.body?.gallery === "string" && VALID_GALLERIES.has(req.body.gallery)
+        ? req.body.gallery
+        : "main";
 
     const uploadId = randomUUID();
     const totalChunks = Math.ceil(size / CHUNK_SIZE_BYTES);
@@ -1025,6 +1031,7 @@ app.post("/api/uploads/initiate", requireUploadAuth, async (req, res, next) => {
       size,
       takenAt,
       location,
+      gallery,
       totalChunks,
       tempDir,
       receivedChunks: new Set(),
@@ -1173,7 +1180,12 @@ app.delete(
 
 app.get("/api/images", async (req, res, next) => {
   try {
-    const records = await enrichRecords(await readManifest());
+    const gallery =
+      typeof req.query.gallery === "string" && VALID_GALLERIES.has(req.query.gallery)
+        ? req.query.gallery
+        : "main";
+    const allRecords = await enrichRecords(await readManifest());
+    const records = allRecords.filter((r) => (r.gallery ?? "main") === gallery);
     const page = parsePositiveInteger(req.query.page);
     const pageSize = parsePositiveInteger(req.query.pageSize);
 
