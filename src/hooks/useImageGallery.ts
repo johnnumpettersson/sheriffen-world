@@ -77,7 +77,7 @@ export interface UploadProgressUpdate {
   totalBytes: number;
 }
 
-export function useImageGallery(gallery: "main" | "kids" = "main") {
+export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [galleryPage, setGalleryPage] = useState(1);
