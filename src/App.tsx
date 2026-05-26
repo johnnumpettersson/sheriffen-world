@@ -877,11 +877,6 @@ export default function App() {
     if (!previewImageId) setMapPreviewMode(false);
   }, [previewImageId]);
 
-  useEffect(() => {
-    if ((kidsMatch || resorMatch) && !authToken) {
-      navigate("/gallery", { replace: true });
-    }
-  }, [kidsMatch, resorMatch, authToken, navigate]);
 
   useEffect(() => {
     if (previewIndex < 0 || sortedImages.length <= 1) return;
@@ -955,7 +950,7 @@ export default function App() {
                     variant="dot"
                     invisible={!hasUnseenUploads}
                   >
-                    <span>{t.galleryTab(mainGallery.galleryTotalItems + (authToken ? kidsGallery.galleryTotalItems + resorGallery.galleryTotalItems : 0))}</span>
+                    <span>{t.galleryTab(mainGallery.galleryTotalItems + kidsGallery.galleryTotalItems + resorGallery.galleryTotalItems)}</span>
                   </Badge>
                 }
               />
@@ -984,23 +979,21 @@ export default function App() {
             <div className={styles.content}>
               {activeTab !== "map" ? (
                 <>
-                  {authToken && (
-                    <Tabs
-                      value={gallerySubTab}
-                      onChange={(_, value: "main" | "kids" | "resor") => {
-                        if (value === "kids") navigate("/kids");
-                        else if (value === "resor") navigate("/resor");
-                        else navigate("/gallery");
-                      }}
-                      textColor="secondary"
-                      indicatorColor="secondary"
-                      sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}
-                    >
-                      <Tab value="main" label={t.sheriffenTab(mainGallery.galleryTotalItems)} />
-                      <Tab value="resor" label={t.resorTab(resorGallery.galleryTotalItems)} />
-                      <Tab value="kids" label={t.kidsTab(kidsGallery.galleryTotalItems)} />
-                    </Tabs>
-                  )}
+                  <Tabs
+                    value={gallerySubTab}
+                    onChange={(_, value: "main" | "kids" | "resor") => {
+                      if (value === "kids") navigate("/kids");
+                      else if (value === "resor") navigate("/resor");
+                      else navigate("/gallery");
+                    }}
+                    textColor="secondary"
+                    indicatorColor="secondary"
+                    sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}
+                  >
+                    <Tab value="main" label={t.sheriffenTab(mainGallery.galleryTotalItems)} />
+                    <Tab value="resor" label={t.resorTab(resorGallery.galleryTotalItems)} />
+                    <Tab value="kids" label={t.kidsTab(kidsGallery.galleryTotalItems)} />
+                  </Tabs>
                   <Images
                     images={galleryPageImages}
                     page={galleryPage}
