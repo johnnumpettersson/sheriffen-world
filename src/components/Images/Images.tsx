@@ -153,7 +153,7 @@ export default function Images({
 }
 
 function getVisiblePages(currentPage: number, totalPages: number): number[] {
-  const maxVisible = 5;
+  const maxVisible = 8;
   const safeTotalPages = Math.max(1, totalPages);
 
   if (safeTotalPages <= maxVisible) {
