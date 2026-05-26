@@ -91,6 +91,7 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
   const [galleryTotalPages, setGalleryTotalPages] = useState(1);
   const [isGalleryLoading, setIsGalleryLoading] = useState(false);
   const warmedImageIdsRef = useRef<Set<string>>(new Set());
+  const refreshAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +113,11 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
 
   const refreshGalleryPage = useCallback(
     async (pageToLoad: number, pageSizeToLoad: number) => {
+      refreshAbortRef.current?.abort();
+      const controller = new AbortController();
+      refreshAbortRef.current = controller;
+      const { signal } = controller;
+
       const clampedPage = Math.max(1, pageToLoad);
       const clampedPageSize = Math.max(1, pageSizeToLoad);
 
@@ -121,7 +127,10 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
           clampedPage,
           clampedPageSize,
           gallery,
+          signal,
         );
+
+        if (signal.aborted) return;
 
         const pageImages = response.items.map(fromApiImageRecord);
 
@@ -139,15 +148,19 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
         setGalleryPageImages(pageImages);
         setGalleryTotalItems(response.totalItems);
         setGalleryTotalPages(response.totalPages);
+      } catch (error) {
+        if (signal.aborted) return;
+        throw error;
       } finally {
-        setIsGalleryLoading(false);
+        if (!signal.aborted) setIsGalleryLoading(false);
       }
     },
     [gallery],
   );
 
   useEffect(() => {
-    refreshGalleryPage(galleryPage, galleryPageSize).catch(() => {
+    refreshGalleryPage(galleryPage, galleryPageSize).catch((err) => {
+      if ((err as Error)?.name === "AbortError") return;
       setGalleryPageImages([]);
       setGalleryTotalItems(0);
       setGalleryTotalPages(1);
@@ -417,11 +430,13 @@ async function fetchImagesPageFromServer(
   page: number,
   pageSize: number,
   gallery: string,
+  signal?: AbortSignal,
 ): Promise<ApiImagesPageResponse> {
   const response = await fetch(
     `${API_BASE_URL}/api/images?page=${page}&pageSize=${pageSize}&gallery=${gallery}`,
     {
       cache: "no-store",
+      signal,
     },
   );
   if (!response.ok) {

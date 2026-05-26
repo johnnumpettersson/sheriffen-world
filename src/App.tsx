@@ -1042,6 +1042,7 @@ export default function App() {
                     recentlyPreviewedImageIds={recentlyPreviewedImageIds}
                     isAuthenticated={Boolean(authToken)}
                     locale={locale}
+                    showTopPager={isKidsMode}
                     uploadSlot={
                       <ImageUpload
                         onFilesSelected={handleFilesSelected}

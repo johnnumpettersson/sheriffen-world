@@ -12,6 +12,10 @@
   flex-wrap: wrap;
 }
 
+.pagerRowHidden {
+  visibility: hidden;
+}
+
 .pagerRow + .gallery {
   margin-top: 0.95rem;
 }

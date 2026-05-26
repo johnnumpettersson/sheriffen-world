@@ -21,6 +21,7 @@ interface ImagesProps {
   isAuthenticated?: boolean;
   locale: Locale;
   uploadSlot?: React.ReactNode;
+  showTopPager?: boolean;
 }
 
 export default function Images({
@@ -39,6 +40,7 @@ export default function Images({
   isAuthenticated = false,
   locale,
   uploadSlot,
+  showTopPager = false,
 }: ImagesProps) {
   const t =
     locale === "sv"
@@ -80,8 +82,8 @@ export default function Images({
     );
   }
 
-  const pager = totalItems > 0 ? (
-    <div className={styles.pagerRow}>
+  const renderPager = (hidden = false) => (
+    <div className={`${styles.pagerRow}${hidden ? ` ${styles.pagerRowHidden}` : ""}`}>
       <div className={styles.pageControls}>
         <button
           type="button"
@@ -123,11 +125,11 @@ export default function Images({
         </button>
       </div>
     </div>
-  ) : null;
+  );
 
   return (
     <section aria-label={t.aria}>
-      {pager}
+      {showTopPager && renderPager(totalItems === 0)}
       <div className={styles.gallery}>
         {uploadSlot}
         {sortedImages.map((image) => (
@@ -145,7 +147,7 @@ export default function Images({
           />
         ))}
       </div>
-      {pager}
+      {showTopPager ? renderPager(totalItems === 0) : totalItems > 0 && renderPager()}
     </section>
   );
 }
