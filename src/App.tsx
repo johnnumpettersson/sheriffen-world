@@ -204,6 +204,7 @@ export default function App() {
   const activeGallery = activeTab === "kids" ? kidsGallery : activeTab === "resor" ? resorGallery : mainGallery;
   const topTab: "gallery" | "map" = (galleryMatch || kidsMatch || resorMatch) ? "gallery" : "map";
   const gallerySubTab: "main" | "kids" | "resor" = kidsMatch ? "kids" : resorMatch ? "resor" : "main";
+  const isKidsMode = !!kidsMatch;
   const urlPage = Math.max(1, Number(searchParams.get("page")) || 1);
   const {
     images,
@@ -909,96 +910,102 @@ export default function App() {
       }
     >
       <main className={styles.main}>
-        <div className={styles.heroBanner}>
-          <div className={styles.heroBannerContent}>
-            <img src="/sheriffen.png" alt="Sheriffen" className={styles.heroImage} />
-            <h1 className={styles.heroTitle}>Sheriffen</h1>
+        {!isKidsMode && (
+          <div className={styles.heroBanner}>
+            <div className={styles.heroBannerContent}>
+              <img src="/sheriffen.png" alt="Sheriffen" className={styles.heroImage} />
+              <h1 className={styles.heroTitle}>Sheriffen</h1>
+            </div>
+            {authToken ? (
+              <button
+                type="button"
+                className={`${styles.authBtn} ${styles.authBtnLoggedIn}`}
+                onClick={handleLogout}
+              >
+                ✓ {t.logout}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={`${styles.authBtn} ${styles.authBtnLogin}`}
+                onClick={() => { setAuthError(null); setIsLoginOpen(true); }}
+              >
+                → {t.loginToUpload}
+              </button>
+            )}
           </div>
-          {authToken ? (
-            <button
-              type="button"
-              className={`${styles.authBtn} ${styles.authBtnLoggedIn}`}
-              onClick={handleLogout}
-            >
-              ✓ {t.logout}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={`${styles.authBtn} ${styles.authBtnLogin}`}
-              onClick={() => { setAuthError(null); setIsLoginOpen(true); }}
-            >
-              → {t.loginToUpload}
-            </button>
-          )}
-        </div>
+        )}
         <div className={styles.centerColumn}>
-          <div className={styles.tabBar}>
-            <Tabs
-              value={topTab}
-              onChange={(_, value: "gallery" | "map") => {
-                if (value === "gallery") {
-                  navigate("/gallery");
-                  setNewUploadCount(0);
-                } else {
-                  navigate("/map");
-                  setCarouselResetSignal((prev) => prev + 1);
-                }
-              }}
-              aria-label="Gallery and map view tabs"
-            >
-              <Tab value="map" label={t.worldMapTab(imagesWithLocation.length)} />
-              <Tab
-                value="gallery"
-                label={
-                  <Badge
-                    color="error"
-                    variant="dot"
-                    invisible={!hasUnseenUploads}
+          {!isKidsMode && (
+            <div className={styles.tabBar}>
+              <Tabs
+                value={topTab}
+                onChange={(_, value: "gallery" | "map") => {
+                  if (value === "gallery") {
+                    navigate("/gallery");
+                    setNewUploadCount(0);
+                  } else {
+                    navigate("/map");
+                    setCarouselResetSignal((prev) => prev + 1);
+                  }
+                }}
+                aria-label="Gallery and map view tabs"
+              >
+                <Tab value="map" label={t.worldMapTab(imagesWithLocation.length)} />
+                <Tab
+                  value="gallery"
+                  label={
+                    <Badge
+                      color="error"
+                      variant="dot"
+                      invisible={!hasUnseenUploads}
+                    >
+                      <span>{t.galleryTab(mainGallery.galleryTotalItems + kidsGallery.galleryTotalItems + resorGallery.galleryTotalItems)}</span>
+                    </Badge>
+                  }
+                />
+              </Tabs>
+              <div className={styles.tabBarControls}>
+                <div className={styles.langToggleGroup}>
+                  <IconButton
+                    onClick={() => setLocale("sv")}
+                    aria-label={t.switchToSwedish}
+                    title={t.switchToSwedish}
+                    className={`${styles.langToggle} ${locale === "sv" ? styles.langToggleActive : ""}`}
                   >
-                    <span>{t.galleryTab(mainGallery.galleryTotalItems + kidsGallery.galleryTotalItems + resorGallery.galleryTotalItems)}</span>
-                  </Badge>
-                }
-              />
-            </Tabs>
-            <div className={styles.tabBarControls}>
-              <div className={styles.langToggleGroup}>
-                <IconButton
-                  onClick={() => setLocale("sv")}
-                  aria-label={t.switchToSwedish}
-                  title={t.switchToSwedish}
-                  className={`${styles.langToggle} ${locale === "sv" ? styles.langToggleActive : ""}`}
-                >
-                  <SE className={styles.langFlag} title="Svenska" />
-                </IconButton>
-                <IconButton
-                  onClick={() => setLocale("en")}
-                  aria-label={t.switchToEnglish}
-                  title={t.switchToEnglish}
-                  className={`${styles.langToggle} ${locale === "en" ? styles.langToggleActive : ""}`}
-                >
-                  <GB className={styles.langFlag} title="English" />
-                </IconButton>
+                    <SE className={styles.langFlag} title="Svenska" />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => setLocale("en")}
+                    aria-label={t.switchToEnglish}
+                    title={t.switchToEnglish}
+                    className={`${styles.langToggle} ${locale === "en" ? styles.langToggleActive : ""}`}
+                  >
+                    <GB className={styles.langFlag} title="English" />
+                  </IconButton>
+                </div>
               </div>
             </div>
-          </div>
+          )}
             <div className={styles.content}>
               {activeTab !== "map" ? (
                 <>
-                  <Tabs
-                    value={gallerySubTab}
-                    onChange={(_, value: "main" | "kids" | "resor") => {
-                      if (value === "kids") navigate("/kids");
-                      else if (value === "resor") navigate("/resor");
-                      else navigate("/gallery");
-                    }}
-                    textColor="secondary"
-                    indicatorColor="secondary"
-                    sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}
-                  >
-                    <Tab value="main" label={t.sheriffenTab(mainGallery.galleryTotalItems)} />
-                    <Tab value="resor" label={t.resorTab(resorGallery.galleryTotalItems)} />
-                  </Tabs>
+                  {!isKidsMode && (
+                    <Tabs
+                      value={gallerySubTab}
+                      onChange={(_, value: "main" | "kids" | "resor") => {
+                        if (value === "kids") navigate("/kids");
+                        else if (value === "resor") navigate("/resor");
+                        else navigate("/gallery");
+                      }}
+                      textColor="secondary"
+                      indicatorColor="secondary"
+                      sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}
+                    >
+                      <Tab value="main" label={t.sheriffenTab(mainGallery.galleryTotalItems)} />
+                      <Tab value="resor" label={t.resorTab(resorGallery.galleryTotalItems)} />
+                    </Tabs>
+                  )}
                   <Images
                     images={galleryPageImages}
                     page={galleryPage}
