@@ -941,6 +941,12 @@ export default function App() {
     setGalleryPage(urlPage);
   }, [urlPage, setGalleryPage]);
 
+  useEffect(() => {
+    if (resorMatch && !authToken) {
+      navigate("/gallery", { replace: true });
+    }
+  }, [resorMatch, authToken, navigate]);
+
 
   useEffect(() => {
     if (previewIndex < 0 || sortedImages.length <= 1) return;
@@ -1041,7 +1047,7 @@ export default function App() {
                       variant="dot"
                       invisible={!hasUnseenUploads}
                     >
-                      <span>{t.galleryTab(mainGallery.galleryTotalItems + resorGallery.galleryTotalItems)}</span>
+                      <span>{t.galleryTab(authToken ? mainGallery.galleryTotalItems + resorGallery.galleryTotalItems : mainGallery.galleryTotalItems)}</span>
                     </Badge>
                   }
                 />
@@ -1114,7 +1120,7 @@ export default function App() {
                     onToggleImageSelect={handleToggleImageSelect}
                     onBulkDelete={() => setIsBulkDeleteOpen(true)}
                     onMarkAllPage={handleMarkAllPage}
-                    toolbarSlot={!isKidsMode && (
+                    toolbarSlot={!isKidsMode && authToken && (
                       <nav className={styles.subNav}>
                         <button type="button" className={`${styles.subNavLink} ${gallerySubTab === "main" ? styles.subNavLinkActive : ""}`} onClick={() => navigate("/gallery")}>
                           {t.sheriffenTab(mainGallery.galleryTotalItems)}
