@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import "./index.css";
 import App from "./App.tsx";
@@ -14,7 +14,6 @@ function RootApp() {
       <CssBaseline />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/map" replace />} />
           <Route path="/*" element={<App />} />
         </Routes>
       </BrowserRouter>

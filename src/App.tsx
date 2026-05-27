@@ -207,6 +207,8 @@ export default function App() {
   const kidsMatch = useMatch("/kids/*");
   const resorMatch = useMatch("/resor/*");
   const activeTab: Tab = galleryMatch ? "gallery" : kidsMatch ? "kids" : resorMatch ? "resor" : "map";
+  const tabPath = (tab: Tab) => (tab === "map" ? "/" : `/${tab}`);
+  const imageTabPath = (tab: Tab, id: string) => (tab === "map" ? `/image/${id}` : `/${tab}/image/${id}`);
   const activeGallery = activeTab === "kids" ? kidsGallery : activeTab === "resor" ? resorGallery : mainGallery;
   const topTab: "gallery" | "map" = (galleryMatch || kidsMatch || resorMatch) ? "gallery" : "map";
   const gallerySubTab: "main" | "kids" | "resor" = kidsMatch ? "kids" : resorMatch ? "resor" : "main";
@@ -227,7 +229,7 @@ export default function App() {
     removeImages,
     updateImageMetadata,
   } = activeGallery;
-  const mapImageMatch = useMatch("/map/image/:id");
+  const mapImageMatch = useMatch("/image/:id");
   const galleryImageMatch = useMatch("/gallery/image/:id");
   const kidsImageMatch = useMatch("/kids/image/:id");
   const resorImageMatch = useMatch("/resor/image/:id");
@@ -484,7 +486,7 @@ export default function App() {
 
   const handleSelectSidebarLocation = (imageId: string) => {
     setSelectedId(imageId);
-    navigate("/map");
+    navigate("/");
   };
 
   const sortedImages = useMemo(
@@ -535,7 +537,7 @@ export default function App() {
     }
 
     if (previewImageId === deleteCandidate.id) {
-      navigate(`/${activeTab}`);
+      navigate(tabPath(activeTab));
     }
 
     setUnpreviewedImageIds((prev) => {
@@ -626,7 +628,7 @@ export default function App() {
     }
 
     setSelectedId(nextId);
-    navigate(`/${activeTab}/image/${nextId}`);
+    navigate(imageTabPath(activeTab, nextId));
     markImageAsPreviewed(nextId);
   };
 
@@ -1060,7 +1062,7 @@ export default function App() {
                     navigate("/gallery");
                     setNewUploadCount(0);
                   } else {
-                    navigate("/map");
+                    navigate("/");
                     setCarouselResetSignal((prev) => prev + 1);
                   }
                 }}
@@ -1131,10 +1133,10 @@ export default function App() {
                       setMapPreviewMode(false);
                       setSelectedId(nextId);
                       if (nextId) {
-                        navigate(`/${activeTab}/image/${nextId}`);
+                        navigate(imageTabPath(activeTab, nextId));
                         markImageAsPreviewed(nextId);
                       } else {
-                        navigate(`/${activeTab}`);
+                        navigate(tabPath(activeTab));
                       }
                     }}
                     onRemove={setDeleteCandidateId}
@@ -1188,7 +1190,7 @@ export default function App() {
                       setMapPreviewMode(true);
                       setPreviewFadeKey((prev) => prev + 1);
                       setSelectedId(null);
-                      navigate(`/${activeTab}/image/${id}`);
+                      navigate(imageTabPath(activeTab, id));
                       markImageAsPreviewed(id);
                     }}
                     onResetView={() => {
@@ -1224,7 +1226,7 @@ export default function App() {
 
       <Dialog
         open={previewImage !== null}
-        onClose={() => navigate(`/${activeTab}`)}
+        onClose={() => navigate(tabPath(activeTab))}
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft") {
             handlePreviewStep(-1);
@@ -1257,7 +1259,7 @@ export default function App() {
       >
         <IconButton
           aria-label="Close image preview"
-          onClick={() => navigate(`/${activeTab}`)}
+          onClick={() => navigate(tabPath(activeTab))}
           sx={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}
         >
           <CloseIcon />
