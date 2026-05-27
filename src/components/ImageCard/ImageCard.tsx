@@ -19,6 +19,11 @@ interface ImageCardProps {
   onToggleCheck?: (id: string) => void;
 }
 
+function formatDate(date: Date): string {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -155,6 +160,9 @@ export default function ImageCard({
         >
           {locale === "sv" ? "Ladda ned" : "Download"}
         </button>
+        {image.takenAt && (
+          <p className={styles.date}>{formatDate(image.takenAt)}</p>
+        )}
         {(image.location?.country || image.location?.countryCode) && (
           <p className={styles.countryRow}>
             <CountryFlagBadge countryCode={image.location?.countryCode} />
