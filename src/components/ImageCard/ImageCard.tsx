@@ -130,6 +130,7 @@ export default function ImageCard({
         <p className={styles.name} title={image.name}>
           {image.name}
         </p>
+        <p className={styles.metaInline}>{formatBytes(image.size)}</p>
         <button
           className={styles.downloadIcon}
           onClick={async (e) => {
@@ -170,12 +171,6 @@ export default function ImageCard({
             <span className={styles.countryName}>
               {getCountryLabel(image) ?? "Unknown"}
             </span>
-          </p>
-        )}
-        <p className={styles.meta}>{formatBytes(image.size)}</p>
-        {image.location && (
-          <p className={styles.coords}>
-            {image.location.lat.toFixed(4)}, {image.location.lng.toFixed(4)}
           </p>
         )}
       </div>

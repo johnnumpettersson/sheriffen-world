@@ -195,11 +195,18 @@
   font-family: monospace;
 }
 
+.metaInline {
+  font-size: 0.68rem;
+  color: #9ca3af;
+  margin: 0.08rem 0 0;
+  line-height: 1;
+}
+
 .downloadIcon {
   background: none;
   border: none;
-  padding: 0.1rem 0;
-  margin: 0.1rem 0 0.1rem;
+  padding: 0;
+  margin: 0;
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
