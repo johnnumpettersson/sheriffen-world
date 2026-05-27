@@ -39,6 +39,34 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: opacity 0.25s ease;
+}
+
+.imageLoading {
+  opacity: 0;
+}
+
+.imageLoaded {
+  opacity: 1;
+}
+
+.shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 0%,
+    #e4e4e4 40%,
+    #ececec 60%,
+    #f0f0f0 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerSlide 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmerSlide {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .flagBadge {

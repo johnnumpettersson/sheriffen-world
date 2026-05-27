@@ -287,6 +287,8 @@ export default function App() {
   const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(() => new Set());
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [loadedPreviewId, setLoadedPreviewId] = useState<string | null>(null);
+  const preloadedImagesRef = useRef<HTMLImageElement[]>([]);
   const t = appText[locale];
 
   const handleUploadProgress = useCallback((update: UploadProgressUpdate) => {
@@ -507,6 +509,7 @@ export default function App() {
     ? sortedImages.findIndex((img) => img.id === previewImageId)
     : -1;
   const previewImage = previewIndex >= 0 ? sortedImages[previewIndex] : null;
+  const previewImageLoaded = loadedPreviewId === previewImage?.id;
   const previewLocationKey = previewImage?.location
     ? getCoordinateCacheKey(
       previewImage.location.lat,
@@ -950,13 +953,15 @@ export default function App() {
 
   useEffect(() => {
     if (previewIndex < 0 || sortedImages.length <= 1) return;
+    const preloaded: HTMLImageElement[] = [];
     for (const dir of [-1, 1]) {
       const idx = (previewIndex + dir + sortedImages.length) % sortedImages.length;
       const img = sortedImages[idx];
-      const src = img.previewUrl || img.dataUrl;
       const el = new window.Image();
-      el.src = src;
+      el.src = img.previewUrl || img.dataUrl;
+      preloaded.push(el);
     }
+    preloadedImagesRef.current = preloaded;
   }, [previewIndex, sortedImages]);
 
   return (
@@ -1301,18 +1306,29 @@ export default function App() {
                     style={{ maxWidth: "100%", maxHeight: "100%", display: "block" }}
                   />
                 ) : (
-                  <img
-                    src={previewImage.previewUrl || previewImage.dataUrl}
-                    alt={previewImage.name}
-                    loading="eager"
-                    decoding="async"
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: "100%",
-                      objectFit: "contain",
-                      display: "block",
-                    }}
-                  />
+                  <>
+                    {!previewImageLoaded && (
+                      <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
+                        <div className={styles.previewSpinner} />
+                      </Box>
+                    )}
+                    <img
+                      key={previewImage.id}
+                      src={previewImage.previewUrl || previewImage.dataUrl}
+                      alt={previewImage.name}
+                      loading="eager"
+                      decoding="async"
+                      onLoad={() => setLoadedPreviewId(previewImage.id)}
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "100%",
+                        objectFit: "contain",
+                        display: "block",
+                        opacity: previewImageLoaded ? 1 : 0,
+                        transition: "opacity 0.2s ease",
+                      }}
+                    />
+                  </>
                 )}
                 <Box
                   sx={{

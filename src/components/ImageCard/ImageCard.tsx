@@ -1,5 +1,6 @@
 import type { GalleryImage } from "../../types";
 import type { Locale } from "../../i18n";
+import { useState } from "react";
 import * as Flags from "country-flag-icons/react/3x2";
 import styles from "./ImageCard.module.css";
 
@@ -61,6 +62,7 @@ export default function ImageCard({
           removeTitle: "Remove image",
         };
 
+  const [thumbLoaded, setThumbLoaded] = useState(false);
   const isOversized = image.mediaType !== "video" && !image.type?.startsWith("video/") && image.size > 5 * 1024 * 1024;
 
   const handleClick = () => {
@@ -94,12 +96,14 @@ export default function ImageCard({
         </span>
       )}
       <div className={styles.imageWrapper}>
+        {!thumbLoaded && <div className={styles.shimmer} />}
         <img
           src={image.thumbnailUrl || image.dataUrl}
           alt={image.name}
-          className={styles.image}
+          className={`${styles.image} ${thumbLoaded ? styles.imageLoaded : styles.imageLoading}`}
           loading="lazy"
           decoding="async"
+          onLoad={() => setThumbLoaded(true)}
         />
         {(image.mediaType === "video" || image.type?.startsWith("video/")) && (
           <span className={styles.playBadge}>▶</span>

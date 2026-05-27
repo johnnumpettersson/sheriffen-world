@@ -484,24 +484,20 @@ function warmImagesInCache(
       const cache = await caches.open("sheriffen-world-assets-v1");
 
       for (const image of queue) {
-        const urls = [image.mapThumbnailUrl, image.thumbnailUrl];
-        for (const url of urls) {
-          try {
-            if (await cache.match(url)) {
-              continue;
-            }
-
-            const response = await fetch(url, { cache: "force-cache" });
-            if (response.ok) {
-              await cache.put(url, response.clone());
-            }
-          } catch {
-            // Cache warming is best-effort.
+        try {
+          if (await cache.match(image.thumbnailUrl)) {
+            continue;
           }
+          const response = await fetch(image.thumbnailUrl, { cache: "force-cache" });
+          if (response.ok) {
+            await cache.put(image.thumbnailUrl, response.clone());
+          }
+        } catch {
+          // Cache warming is best-effort.
         }
       }
     })();
-  }, 0);
+  }, 3000);
 }
 
 async function uploadImageToServer(
