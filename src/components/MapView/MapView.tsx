@@ -66,18 +66,22 @@ const PROXIMITY_DEG = 0.3; // ~33 km — "same city" threshold
 function FlyToSelected({ selectedImage, allImages }: { selectedImage: GalleryImage | null; allImages: GalleryImage[] }) {
   const map = useMap();
   useEffect(() => {
-    if (selectedImage?.location) {
-      const { lat, lng } = selectedImage.location;
-      const nearbyCount = allImages.filter(
-        (img) =>
-          img.id !== selectedImage.id &&
-          img.location !== null &&
-          Math.abs(img.location.lat - lat) <= PROXIMITY_DEG &&
-          Math.abs(img.location.lng - lng) <= PROXIMITY_DEG,
-      ).length;
-      const zoom = nearbyCount >= 1 ? 13 : 8;
-      map.flyTo([lat, lng], zoom, { duration: 1.2 });
-    }
+    if (!selectedImage?.location) return;
+    const { lat, lng } = selectedImage.location;
+    const nearbyCount = allImages.filter(
+      (img) =>
+        img.id !== selectedImage.id &&
+        img.location !== null &&
+        Math.abs(img.location.lat - lat) <= PROXIMITY_DEG &&
+        Math.abs(img.location.lng - lng) <= PROXIMITY_DEG,
+    ).length;
+    const targetZoom = nearbyCount >= 1 ? 13 : 8;
+    const currentZoom = map.getZoom();
+    // Never zoom out from where the user already is
+    const zoom = Math.max(currentZoom, targetZoom);
+    // If the point is already visible at a sufficient zoom, skip animation entirely
+    if (map.getBounds().contains([lat, lng]) && currentZoom >= targetZoom) return;
+    map.flyTo([lat, lng], zoom, { duration: 1.2 });
   }, [selectedImage, allImages, map]);
   return null;
 }
