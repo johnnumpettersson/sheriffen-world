@@ -61,7 +61,7 @@ interface ApiImagesPageResponse {
 const CHUNK_UPLOAD_MAX_RETRIES = 3;
 const CHUNK_UPLOAD_RETRY_BASE_DELAY_MS = 450;
 const UPLOAD_RESUME_STORAGE_KEY = "sheriffen-world-upload-resume-sessions";
-const DEFAULT_GALLERY_ITEMS_PER_PAGE = 50;
+const DEFAULT_GALLERY_ITEMS_PER_PAGE = 49;
 
 interface ImageMetadataUpdate {
   location: GeoLocation | null;
