@@ -193,6 +193,7 @@ interface MapViewProps {
   onOpenImage: (id: string) => void;
   onResetView?: () => void;
   locale: Locale;
+  isLoading?: boolean;
 }
 
 export default function MapView({
@@ -202,6 +203,7 @@ export default function MapView({
   onOpenImage,
   onResetView,
   locale,
+  isLoading = false,
 }: MapViewProps) {
   const t =
     locale === "sv"
@@ -255,7 +257,12 @@ export default function MapView({
           </Marker>
         ))}
       </MapContainer>
-      {imagesWithLocation.length === 0 && (
+      {isLoading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingSpinner} />
+        </div>
+      )}
+      {!isLoading && imagesWithLocation.length === 0 && (
         <div className={styles.noLocationOverlay}>
           <p>{t.noLocation}</p>
         </div>

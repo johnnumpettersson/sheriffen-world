@@ -1181,6 +1181,7 @@ export default function App() {
                 <div className={styles.mapWrapper}>
                   <MapView
                     images={mapPreviewMode && previewImage ? [previewImage] : mainGallery.images}
+                    isLoading={mainGallery.isImagesLoading}
                     selectedId={selectedId}
                     onSelectMarker={(id) =>
                       setSelectedId(id === selectedId ? null : id)

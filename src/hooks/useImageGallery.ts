@@ -90,12 +90,14 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
   const [galleryTotalItems, setGalleryTotalItems] = useState(0);
   const [galleryTotalPages, setGalleryTotalPages] = useState(1);
   const [isGalleryLoading, setIsGalleryLoading] = useState(false);
+  const [isImagesLoading, setIsImagesLoading] = useState(true);
   const warmedImageIdsRef = useRef<Set<string>>(new Set());
   const refreshAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
+    setIsImagesLoading(true);
     fetchImagesFromServer(gallery)
       .then((serverImages) => {
         if (!cancelled) {
@@ -104,6 +106,9 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
       })
       .catch(() => {
         // Keep local state empty when API is unavailable.
+      })
+      .finally(() => {
+        if (!cancelled) setIsImagesLoading(false);
       });
 
     return () => {
@@ -367,6 +372,7 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
 
   return {
     images,
+    isImagesLoading,
     galleryPageImages,
     galleryPage,
     galleryPageSize,
