@@ -29,6 +29,76 @@ interface ImagesProps {
   onBulkDelete?: () => void;
   onMarkAllPage?: () => void;
   toolbarSlot?: React.ReactNode;
+  hideActions?: boolean;
+}
+
+export interface BulkActionsMenuProps {
+  bulkSelectMode: boolean;
+  allPageSelected: boolean;
+  onToggleBulkSelectMode?: () => void;
+  onMarkAllPage?: () => void;
+  locale: Locale;
+}
+
+export function BulkActionsMenu({
+  bulkSelectMode,
+  allPageSelected,
+  onToggleBulkSelectMode,
+  onMarkAllPage,
+  locale,
+}: BulkActionsMenuProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const t =
+    locale === "sv"
+      ? { select: "Markera flera", cancelSelect: "Avbryt", markAll: "Markera alla", unmarkAll: "Avmarkera alla" }
+      : { select: "Mark multiple", cancelSelect: "Cancel", markAll: "Mark all", unmarkAll: "Unmark all" };
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
+  return (
+    <div className={styles.menuWrapper} ref={menuRef}>
+      <button
+        type="button"
+        className={`${styles.menuTrigger} ${menuOpen ? styles.menuTriggerActive : ""}`}
+        onClick={() => setMenuOpen((v) => !v)}
+        aria-label="Image actions menu"
+        title="Image actions"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
+          <path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.02 7.02 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.47.41l-.36 2.54a7.1 7.1 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.74 9.87a.47.47 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.36 1.04.67 1.62.94l.36 2.54c.06.26.29.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54a7.1 7.1 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 0 0-.12-.61l-2.03-1.58ZM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2Z"/>
+        </svg>
+      </button>
+      {menuOpen && (
+        <div className={styles.menuDropdown}>
+          <button
+            type="button"
+            className={bulkSelectMode ? styles.menuItemCancel : styles.menuItem}
+            onClick={() => { onToggleBulkSelectMode?.(); setMenuOpen(false); }}
+          >
+            {bulkSelectMode ? t.cancelSelect : t.select}
+          </button>
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={() => { onMarkAllPage?.(); setMenuOpen(false); }}
+          >
+            {allPageSelected ? t.unmarkAll : t.markAll}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function Images({
@@ -55,6 +125,7 @@ export default function Images({
   onBulkDelete,
   onMarkAllPage,
   toolbarSlot,
+  hideActions = false,
 }: ImagesProps) {
   const t =
     locale === "sv"
@@ -154,27 +225,13 @@ export default function Images({
   const checkedCount = selectedImageIds?.size ?? 0;
   const allPageSelected = sortedImages.length > 0 && sortedImages.every((img) => selectedImageIds?.has(img.id));
 
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuOpen]);
-
   return (
     <section aria-label={t.aria}>
       {showTopPager && renderPager(totalItems === 0)}
       {((isAuthenticated && totalItems > 0) || toolbarSlot) && (
         <div className={styles.bulkToolbar}>
           <div className={styles.toolbarLeft}>{toolbarSlot}</div>
-          {isAuthenticated && checkedCount > 0 && (
+          {!hideActions && isAuthenticated && checkedCount > 0 && (
             <button
               type="button"
               className={styles.trashBtn}
@@ -187,37 +244,15 @@ export default function Images({
               </svg>
             </button>
           )}
-          {isAuthenticated && <div className={styles.menuWrapper} ref={menuRef}>
-            <button
-              type="button"
-              className={styles.menuTrigger}
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Image actions menu"
-              title="Image actions"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
-                <path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.02 7.02 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.47.41l-.36 2.54a7.1 7.1 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.74 9.87a.47.47 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.36 1.04.67 1.62.94l.36 2.54c.06.26.29.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54a7.1 7.1 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 0 0-.12-.61l-2.03-1.58ZM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2Z"/>
-              </svg>
-            </button>
-            {menuOpen && (
-              <div className={styles.menuDropdown}>
-                <button
-                  type="button"
-                  className={bulkSelectMode ? styles.menuItemCancel : styles.menuItem}
-                  onClick={() => { onToggleBulkSelectMode?.(); setMenuOpen(false); }}
-                >
-                  {bulkSelectMode ? t.cancelSelect : t.select}
-                </button>
-                <button
-                  type="button"
-                  className={styles.menuItem}
-                  onClick={() => { onMarkAllPage?.(); setMenuOpen(false); }}
-                >
-                  {allPageSelected ? t.unmarkAll : t.markAll}
-                </button>
-              </div>
-            )}
-          </div>}
+          {!hideActions && isAuthenticated && (
+            <BulkActionsMenu
+              bulkSelectMode={bulkSelectMode}
+              allPageSelected={allPageSelected}
+              onToggleBulkSelectMode={onToggleBulkSelectMode}
+              onMarkAllPage={onMarkAllPage}
+              locale={locale}
+            />
+          )}
         </div>
       )}
       <div className={styles.gallery}>

@@ -26,7 +26,7 @@ import { useTheme } from "@mui/material/styles";
 import { useImageGallery } from "./hooks/useImageGallery";
 import type { UploadProgressUpdate } from "./hooks/useImageGallery";
 import ImageUpload from "./components/ImageUpload/ImageUpload";
-import Images from "./components/Images/Images";
+import Images, { BulkActionsMenu } from "./components/Images/Images";
 import MapView from "./components/MapView/MapView";
 import CountriesList from "./components/CountriesList/CountriesList";
 import type { Locale } from "./i18n";
@@ -499,6 +499,7 @@ export default function App() {
 
   const imagesWithLocation = mainGallery.images.filter((img) => img.location !== null);
   const hasUnseenUploads = newUploadCount > 0 && topTab !== "gallery";
+  const allPageSelected = galleryPageImages.length > 0 && galleryPageImages.every((img) => selectedImageIds.has(img.id));
   const deleteCandidate = deleteCandidateId
     ? (images.find((img) => img.id === deleteCandidateId) ?? null)
     : null;
@@ -980,23 +981,47 @@ export default function App() {
       {isKidsMode && (
         <header className={styles.kidsHeader}>
           <span className={styles.kidsHeaderTitle}>Familjealbum</span>
-          {authToken ? (
-            <button
-              type="button"
-              className={`${styles.kidsAuthBtn} ${styles.kidsLogoutBtn}`}
-              onClick={handleLogout}
-            >
-              {t.logout}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={`${styles.kidsAuthBtn} ${styles.kidsLoginBtn}`}
-              onClick={() => { setAuthError(null); setIsLoginOpen(true); }}
-            >
-              {t.loginToUpload}
-            </button>
-          )}
+          <div className={styles.kidsHeaderActions}>
+            {authToken && galleryTotalItems > 0 && selectedImageIds.size > 0 && (
+              <button
+                type="button"
+                className={styles.kidsTrashBtn}
+                onClick={() => setIsBulkDeleteOpen(true)}
+                aria-label={t.bulkDeleteTitle(selectedImageIds.size)}
+                title={t.bulkDeleteTitle(selectedImageIds.size)}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
+                  <path d="M9 3h6l1 1h4v2H4V4h4l1-1ZM5 7h14l-1 14H6L5 7Zm5 2v10h1V9h-1Zm4 0v10h1V9h-1Z"/>
+                </svg>
+              </button>
+            )}
+            {authToken ? (
+              <button
+                type="button"
+                className={`${styles.kidsAuthBtn} ${styles.kidsLogoutBtn}`}
+                onClick={handleLogout}
+              >
+                {t.logout}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={`${styles.kidsAuthBtn} ${styles.kidsLoginBtn}`}
+                onClick={() => { setAuthError(null); setIsLoginOpen(true); }}
+              >
+                {t.loginToUpload}
+              </button>
+            )}
+            {authToken && galleryTotalItems > 0 && (
+              <BulkActionsMenu
+                bulkSelectMode={bulkSelectMode}
+                allPageSelected={allPageSelected}
+                onToggleBulkSelectMode={handleToggleBulkSelectMode}
+                onMarkAllPage={handleMarkAllPage}
+                locale={locale}
+              />
+            )}
+          </div>
         </header>
       )}
       <main className={styles.main}>
@@ -1125,6 +1150,7 @@ export default function App() {
                     onToggleImageSelect={handleToggleImageSelect}
                     onBulkDelete={() => setIsBulkDeleteOpen(true)}
                     onMarkAllPage={handleMarkAllPage}
+                    hideActions={isKidsMode}
                     toolbarSlot={!isKidsMode && authToken && (
                       <nav className={styles.subNav}>
                         <button type="button" className={`${styles.subNavLink} ${gallerySubTab === "main" ? styles.subNavLinkActive : ""}`} onClick={() => navigate("/gallery")}>
