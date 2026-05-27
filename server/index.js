@@ -606,6 +606,12 @@ async function* readUploadChunks(session) {
 }
 
 async function compressImageBuffer(buffer, mimeType) {
+  // WebP already came from client-side compression — storing it again as JPEG
+  // would be a second lossy cycle. Keep the WebP as-is.
+  if (mimeType === "image/webp") {
+    return { buffer, contentType: "image/webp" };
+  }
+
   try {
     const compressed = await sharp(buffer)
       .rotate()
@@ -634,7 +640,8 @@ async function createChunkedUploadRecord(session) {
     const rawBuffer = Buffer.concat(chunks);
     const { buffer: compressed, contentType } = await compressImageBuffer(rawBuffer, session.type);
     const baseName = sanitize(session.name).replace(/\.[^.]+$/, "") || id;
-    objectKey = `${id}/${baseName}.jpg`;
+    const ext = contentType === "image/webp" ? "webp" : "jpg";
+    objectKey = `${id}/${baseName}.${ext}`;
     storeSize = compressed.length;
     storeContentType = contentType;
     await minio.putObject(BUCKET, objectKey, compressed, compressed.length, {
