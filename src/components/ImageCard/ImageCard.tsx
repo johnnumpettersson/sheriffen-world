@@ -158,6 +158,7 @@ export default function ImageCard({
           aria-label={t.downloadImage(image.name)}
           title={t.downloadImage(image.name)}
         >
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 8.5 1.5 4h3V0h3v4h3L6 8.5ZM0 11v-1.5h12V11H0Z"/></svg>
           {locale === "sv" ? "Ladda ned" : "Download"}
         </button>
         {image.takenAt && (

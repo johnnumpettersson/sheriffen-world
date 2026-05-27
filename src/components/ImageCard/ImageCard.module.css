@@ -203,20 +203,21 @@
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  color: #4b5563;
-  opacity: 0.75;
-  transition:
-    opacity 0.2s,
-    color 0.2s;
+  color: #0284c7;
+  transition: color 0.2s;
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
+  gap: 0.25rem;
   line-height: 1;
+  text-decoration: underline;
+  text-decoration-color: rgba(2, 132, 199, 0.35);
+  text-underline-offset: 2px;
 }
 
 .downloadIcon:hover {
-  color: #0891b2;
-  opacity: 1;
+  color: #0369a1;
+  text-decoration-color: rgba(3, 105, 161, 0.65);
 }
 
 .removeBtn {
