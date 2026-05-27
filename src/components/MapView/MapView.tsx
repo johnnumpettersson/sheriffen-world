@@ -61,19 +61,24 @@ function getCachedImageIcon(dataUrl: string, isSelected: boolean): L.DivIcon {
   return icon;
 }
 
-interface FlyToSelectedProps {
-  selectedImage: GalleryImage | null;
-}
+const PROXIMITY_DEG = 0.3; // ~33 km — "same city" threshold
 
-function FlyToSelected({ selectedImage }: FlyToSelectedProps) {
+function FlyToSelected({ selectedImage, allImages }: { selectedImage: GalleryImage | null; allImages: GalleryImage[] }) {
   const map = useMap();
   useEffect(() => {
     if (selectedImage?.location) {
-      map.flyTo([selectedImage.location.lat, selectedImage.location.lng], 8, {
-        duration: 1.2,
-      });
+      const { lat, lng } = selectedImage.location;
+      const nearbyCount = allImages.filter(
+        (img) =>
+          img.id !== selectedImage.id &&
+          img.location !== null &&
+          Math.abs(img.location.lat - lat) <= PROXIMITY_DEG &&
+          Math.abs(img.location.lng - lng) <= PROXIMITY_DEG,
+      ).length;
+      const zoom = nearbyCount >= 1 ? 13 : 8;
+      map.flyTo([lat, lng], zoom, { duration: 1.2 });
     }
-  }, [selectedImage, map]);
+  }, [selectedImage, allImages, map]);
   return null;
 }
 
@@ -225,7 +230,7 @@ export default function MapView({
       >
         <TileLayer attribution={BASEMAP_ATTRIBUTION} url={BASEMAP_URL} />
         <ResetWorldViewControl locale={locale} onReset={onResetView} />
-        <FlyToSelected selectedImage={selectedImage} />
+        <FlyToSelected selectedImage={selectedImage} allImages={imagesWithLocation} />
         {imagesWithLocation.map((img) => (
           <Marker
             key={img.id}
