@@ -91,7 +91,6 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
   const [galleryTotalPages, setGalleryTotalPages] = useState(1);
   const [isGalleryLoading, setIsGalleryLoading] = useState(false);
   const [isImagesLoading, setIsImagesLoading] = useState(true);
-  const warmedImageIdsRef = useRef<Set<string>>(new Set());
   const refreshAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -171,14 +170,6 @@ export function useImageGallery(gallery: "main" | "kids" | "resor" = "main") {
       setGalleryTotalPages(1);
     });
   }, [galleryPage, galleryPageSize, refreshGalleryPage]);
-
-  useEffect(() => {
-    if (images.length === 0) {
-      return;
-    }
-
-    warmImagesInCache(images, warmedImageIdsRef.current);
-  }, [images]);
 
   const addImages = useCallback(
     async (
@@ -468,42 +459,6 @@ async function fetchImagesPageFromServer(
   }
 
   return response.json() as Promise<ApiImagesPageResponse>;
-}
-
-function warmImagesInCache(
-  images: GalleryImage[],
-  warmedImageIds: Set<string>,
-): void {
-  if (typeof window === "undefined" || typeof caches === "undefined") {
-    return;
-  }
-
-  const queue = images.filter((image) => !warmedImageIds.has(image.id));
-  if (queue.length === 0) {
-    return;
-  }
-
-  queue.forEach((image) => warmedImageIds.add(image.id));
-
-  window.setTimeout(() => {
-    void (async () => {
-      const cache = await caches.open("sheriffen-world-assets-v1");
-
-      for (const image of queue) {
-        try {
-          if (await cache.match(image.thumbnailUrl)) {
-            continue;
-          }
-          const response = await fetch(image.thumbnailUrl, { cache: "force-cache" });
-          if (response.ok) {
-            await cache.put(image.thumbnailUrl, response.clone());
-          }
-        } catch {
-          // Cache warming is best-effort.
-        }
-      }
-    })();
-  }, 3000);
 }
 
 async function uploadImageToServer(
