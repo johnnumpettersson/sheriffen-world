@@ -537,7 +537,7 @@ export default function App() {
     }
 
     if (previewImageId === deleteCandidate.id) {
-      navigate(tabPath(activeTab));
+      navigate({ pathname: tabPath(activeTab), search: searchParams.toString() });
     }
 
     setUnpreviewedImageIds((prev) => {
@@ -628,7 +628,7 @@ export default function App() {
     }
 
     setSelectedId(nextId);
-    navigate(imageTabPath(activeTab, nextId));
+    navigate({ pathname: imageTabPath(activeTab, nextId), search: searchParams.toString() });
     markImageAsPreviewed(nextId);
   };
 
@@ -1133,10 +1133,10 @@ export default function App() {
                       setMapPreviewMode(false);
                       setSelectedId(nextId);
                       if (nextId) {
-                        navigate(imageTabPath(activeTab, nextId));
+                        navigate({ pathname: imageTabPath(activeTab, nextId), search: searchParams.toString() });
                         markImageAsPreviewed(nextId);
                       } else {
-                        navigate(tabPath(activeTab));
+                        navigate({ pathname: tabPath(activeTab), search: searchParams.toString() });
                       }
                     }}
                     onRemove={setDeleteCandidateId}
@@ -1227,7 +1227,7 @@ export default function App() {
 
       <Dialog
         open={previewImage !== null}
-        onClose={() => navigate(tabPath(activeTab))}
+        onClose={() => navigate({ pathname: tabPath(activeTab), search: searchParams.toString() })}
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft") {
             handlePreviewStep(-1);
@@ -1260,7 +1260,7 @@ export default function App() {
       >
         <IconButton
           aria-label="Close image preview"
-          onClick={() => navigate(tabPath(activeTab))}
+          onClick={() => navigate({ pathname: tabPath(activeTab), search: searchParams.toString() })}
           sx={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}
         >
           <CloseIcon />
