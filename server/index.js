@@ -187,7 +187,10 @@ async function ensureBucketWithRetry(
 }
 
 async function readManifest() {
-  const parsed = await readJsonObject(MANIFEST_OBJECT, []);
+  const parsed = await readJsonObject(MANIFEST_OBJECT, null);
+  if (parsed === null) {
+    throw new Error("[api] Cannot read manifest: R2 connection error. Refusing to write to avoid data loss.");
+  }
   return Array.isArray(parsed) ? parsed : [];
 }
 
@@ -203,10 +206,11 @@ async function readJsonObject(objectName, fallbackValue) {
   } catch (error) {
     if (isStorageConnectionError(error)) {
       console.warn(
-        `[api] storage unavailable while reading ${objectName}, using fallback`,
+        `[api] storage unavailable while reading ${objectName}, NOT using fallback to prevent data loss`,
         error instanceof Error ? error.message : String(error),
       );
-      return fallbackValue;
+      // Do NOT return fallback — callers that write after reading must fail loudly
+      throw error;
     }
 
     const code = error?.code;
