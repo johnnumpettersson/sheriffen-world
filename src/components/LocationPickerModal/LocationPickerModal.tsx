@@ -1,8 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Dialog, DialogTitle, DialogContent, IconButton, InputAdornment, TextField, CircularProgress } from "@mui/material";
+import {
+  Autocomplete,
+  Dialog,
+  DialogContent,
+  IconButton,
+  TextField,
+} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import type { Locale } from "../../i18n";
@@ -11,7 +17,8 @@ import styles from "./LocationPickerModal.module.css";
 const WORLD_CENTER: [number, number] = [20, 0];
 const WORLD_ZOOM = 2;
 const BASEMAP_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-const BASEMAP_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const BASEMAP_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 const pickerIcon = L.divIcon({
   className: "",
@@ -24,24 +31,19 @@ const pickerIcon = L.divIcon({
   iconAnchor: [11, 11],
 });
 
-interface ClickHandlerProps {
-  onPick: (lat: number, lng: number) => void;
+interface NominatimResult {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
 }
 
-function ClickHandler({ onPick }: ClickHandlerProps) {
-  useMapEvents({
-    click(e) {
-      onPick(e.latlng.lat, e.latlng.lng);
-    },
-  });
+function ClickHandler({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+  useMapEvents({ click(e) { onPick(e.latlng.lat, e.latlng.lng); } });
   return null;
 }
 
-interface FlyToProps {
-  position: [number, number] | null;
-}
-
-function FlyTo({ position }: FlyToProps) {
+function FlyTo({ position }: { position: [number, number] | null }) {
   const map = useMapEvents({});
   const prev = useRef<[number, number] | null>(null);
   useEffect(() => {
@@ -70,104 +72,138 @@ export default function LocationPickerModal({
   initialLng,
   locale,
 }: LocationPickerModalProps) {
-  const [picked, setPicked] = useState<[number, number] | null>(
-    initialLat != null && initialLng != null ? [initialLat, initialLng] : null,
-  );
+  const [picked, setPicked] = useState<[number, number] | null>(null);
   const [flyTo, setFlyTo] = useState<[number, number] | null>(null);
-  const [search, setSearch] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [options, setOptions] = useState<NominatimResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const t = locale === "sv"
-    ? { title: "Välj plats på kartan", search: "Sök plats...", notFound: "Ingen plats hittades.", close: "Stäng", coords: "Valda koordinater" }
-    : { title: "Pick location on map", search: "Search place...", notFound: "No location found.", close: "Close", coords: "Selected coordinates" };
+  const t =
+    locale === "sv"
+      ? { search: "Sök plats...", notFound: "Ingen plats hittades." }
+      : { search: "Search place...", notFound: "No location found." };
 
   useEffect(() => {
     if (open) {
-      const pos = initialLat != null && initialLng != null ? [initialLat, initialLng] as [number, number] : null;
+      const pos =
+        initialLat != null && initialLng != null
+          ? ([initialLat, initialLng] as [number, number])
+          : null;
       setPicked(pos);
       setFlyTo(pos);
-      setSearch("");
-      setSearchError(null);
+      setInputValue("");
+      setOptions([]);
     }
   }, [open, initialLat, initialLng]);
 
-  const handlePick = (lat: number, lng: number) => {
+  const fetchSuggestions = useCallback(
+    (query: string) => {
+      abortRef.current?.abort();
+      if (!query.trim()) {
+        setOptions([]);
+        setLoading(false);
+        return;
+      }
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setLoading(true);
+      fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=6&q=${encodeURIComponent(query)}`,
+        {
+          signal: controller.signal,
+          headers: { "Accept-Language": locale === "sv" ? "sv" : "en" },
+        },
+      )
+        .then((r) => r.json())
+        .then((data: NominatimResult[]) => {
+          setOptions(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (err?.name !== "AbortError") setLoading(false);
+        });
+    },
+    [locale],
+  );
+
+  const handleInputChange = (_: unknown, value: string) => {
+    setInputValue(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSuggestions(value), 350);
+  };
+
+  const handleSelect = (_: unknown, option: NominatimResult | null) => {
+    if (!option) return;
+    const pos: [number, number] = [parseFloat(option.lat), parseFloat(option.lon)];
+    setFlyTo(pos);
+    setPicked(pos);
+    onPick(pos[0], pos[1]);
+  };
+
+  const handleMapPick = (lat: number, lng: number) => {
     const pos: [number, number] = [lat, lng];
     setPicked(pos);
     onPick(lat, lng);
   };
 
-  const handleSearch = async () => {
-    const q = search.trim();
-    if (!q) return;
-    setSearching(true);
-    setSearchError(null);
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
-        { headers: { "Accept-Language": locale === "sv" ? "sv" : "en" } },
-      );
-      const data = await res.json();
-      if (!data.length) {
-        setSearchError(t.notFound);
-        return;
-      }
-      const { lat, lon } = data[0];
-      const pos: [number, number] = [parseFloat(lat), parseFloat(lon)];
-      setFlyTo(pos);
-    } catch {
-      setSearchError(t.notFound);
-    } finally {
-      setSearching(false);
-    }
-  };
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ pr: 6 }}>
-        {t.title}
-        <IconButton onClick={onClose} size="small" sx={{ position: "absolute", top: 8, right: 8 }}>
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent sx={{ p: 0 }}>
-        <div className={styles.searchRow}>
-          <TextField
-            size="small"
-            fullWidth
-            placeholder={t.search}
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setSearchError(null); }}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            error={!!searchError}
-            helperText={searchError ?? " "}
-            slotProps={{
-              input: {
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {searching
-                      ? <CircularProgress size={18} />
-                      : <IconButton size="small" onClick={handleSearch}><SearchIcon fontSize="small" /></IconButton>
-                    }
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-        </div>
+      <DialogContent sx={{ p: 0, "&.MuiDialogContent-root": { paddingTop: 0 } }}>
         <div className={styles.mapWrap}>
-          <MapContainer
-            center={WORLD_CENTER}
-            zoom={WORLD_ZOOM}
-            className={styles.map}
-            scrollWheelZoom
-          >
+          <MapContainer center={WORLD_CENTER} zoom={WORLD_ZOOM} className={styles.map} scrollWheelZoom>
             <TileLayer attribution={BASEMAP_ATTRIBUTION} url={BASEMAP_URL} />
-            <ClickHandler onPick={handlePick} />
+            <ClickHandler onPick={handleMapPick} />
             <FlyTo position={flyTo} />
             {picked && <Marker position={picked} icon={pickerIcon} />}
           </MapContainer>
+          <div className={styles.searchOverlay}>
+            <SearchIcon fontSize="small" className={styles.searchIcon} />
+            <Autocomplete
+              fullWidth
+              freeSolo
+              filterOptions={(x) => x}
+              options={options}
+              getOptionLabel={(o) => (typeof o === "string" ? o : o.display_name)}
+              inputValue={inputValue}
+              onInputChange={handleInputChange}
+              onChange={handleSelect}
+              loading={loading}
+              noOptionsText={inputValue.trim() ? t.notFound : ""}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  placeholder={t.search}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      background: "#fff",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      color: "#1f2937",
+                      paddingRight: "32px !important",
+                      "& fieldset": { border: "none" },
+                      "& input": { color: "#1f2937" },
+                      "& input::placeholder": { color: "#9ca3af", opacity: 1 },
+                    },
+                  }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <li {...props} key={option.place_id}>
+                  <span className={styles.suggestion}>{option.display_name}</span>
+                </li>
+              )}
+            />
+          </div>
+          <IconButton
+            onClick={onClose}
+            size="small"
+            className={styles.closeButton}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </div>
         {picked && (
           <p className={styles.coordsDisplay}>
