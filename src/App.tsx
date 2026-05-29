@@ -20,6 +20,7 @@ import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import MapIcon from "@mui/icons-material/Map";
 import { GB, SE } from "country-flag-icons/react/3x2";
 import * as Flags from "country-flag-icons/react/3x2";
 import { useTheme } from "@mui/material/styles";
@@ -29,6 +30,7 @@ import ImageUpload from "./components/ImageUpload/ImageUpload";
 import Images, { BulkActionsMenu } from "./components/Images/Images";
 import MapView from "./components/MapView/MapView";
 import CountriesList from "./components/CountriesList/CountriesList";
+import LocationPickerModal from "./components/LocationPickerModal/LocationPickerModal";
 import type { Locale } from "./i18n";
 import type { GeoLocation } from "./types";
 import type { ImageExif } from "./utils/compressImage";
@@ -268,6 +270,7 @@ export default function App() {
   );
   const [metadataError, setMetadataError] = useState<string | null>(null);
   const [isSavingMetadata, setIsSavingMetadata] = useState(false);
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
   const [isResolvingPreviewLocation, setIsResolvingPreviewLocation] =
     useState(false);
@@ -1570,6 +1573,21 @@ export default function App() {
               }}
               helperText={t.coordinatesHint}
               fullWidth
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        title="Pick on map"
+                        onClick={() => setIsLocationPickerOpen(true)}
+                      >
+                        <MapIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
             <TextField
               label={t.date}
@@ -1620,6 +1638,23 @@ export default function App() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <LocationPickerModal
+        open={isLocationPickerOpen}
+        onClose={() => setIsLocationPickerOpen(false)}
+        initialLat={metadataForm.lat ? Number(metadataForm.lat) : null}
+        initialLng={metadataForm.lng ? Number(metadataForm.lng) : null}
+        locale={locale}
+        onPick={(lat, lng) => {
+          const coordinates = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          setMetadataForm((prev) => ({
+            ...prev,
+            coordinates,
+            lat: String(lat),
+            lng: String(lng),
+          }));
+        }}
+      />
 
       <Dialog
         open={isLoginOpen}

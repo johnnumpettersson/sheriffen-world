@@ -1,0 +1,24 @@
+.searchRow {
+  padding: 0.75rem 1rem 0;
+}
+
+.mapWrap {
+  height: 420px;
+  width: 100%;
+  cursor: crosshair;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+.coordsDisplay {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-family: monospace;
+  color: #4f46e5;
+  background: #f5f3ff;
+  border-top: 1px solid #ede9fe;
+}
