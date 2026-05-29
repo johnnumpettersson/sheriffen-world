@@ -77,6 +77,7 @@ export default function LocationPickerModal({
   const [inputValue, setInputValue] = useState("");
   const [options, setOptions] = useState<NominatimResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -95,6 +96,7 @@ export default function LocationPickerModal({
       setFlyTo(pos);
       setInputValue("");
       setOptions([]);
+      setNotFound(false);
     }
   }, [open, initialLat, initialLng]);
 
@@ -109,6 +111,7 @@ export default function LocationPickerModal({
       const controller = new AbortController();
       abortRef.current = controller;
       setLoading(true);
+      setNotFound(false);
       fetch(
         `https://nominatim.openstreetmap.org/search?format=json&limit=6&q=${encodeURIComponent(query)}`,
         {
@@ -128,18 +131,51 @@ export default function LocationPickerModal({
     [locale],
   );
 
+  const searchAndFly = useCallback(
+    async (query: string) => {
+      if (!query.trim()) return;
+      abortRef.current?.abort();
+      setLoading(true);
+      setNotFound(false);
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
+          { headers: { "Accept-Language": locale === "sv" ? "sv" : "en" } },
+        );
+        const data: NominatimResult[] = await res.json();
+        if (!data.length) { setNotFound(true); return; }
+        const pos: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+        setFlyTo(pos);
+        setPicked(pos);
+        onPick(pos[0], pos[1]);
+        setOptions([]);
+      } catch {
+        setNotFound(true);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [locale, onPick],
+  );
+
   const handleInputChange = (_: unknown, value: string) => {
     setInputValue(value);
+    setNotFound(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchSuggestions(value), 350);
   };
 
-  const handleSelect = (_: unknown, option: NominatimResult | null) => {
+  const handleSelect = (_: unknown, option: NominatimResult | string | null) => {
     if (!option) return;
+    if (typeof option === "string") {
+      void searchAndFly(option);
+      return;
+    }
     const pos: [number, number] = [parseFloat(option.lat), parseFloat(option.lon)];
     setFlyTo(pos);
     setPicked(pos);
     onPick(pos[0], pos[1]);
+    setOptions([]);
   };
 
   const handleMapPick = (lat: number, lng: number) => {
@@ -170,12 +206,19 @@ export default function LocationPickerModal({
               onInputChange={handleInputChange}
               onChange={handleSelect}
               loading={loading}
-              noOptionsText={inputValue.trim() ? t.notFound : ""}
+              noOptionsText={notFound ? t.notFound : (inputValue.trim() ? t.notFound : "")}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   size="small"
                   placeholder={t.search}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      void searchAndFly(inputValue);
+                    }
+                  }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       background: "#fff",
@@ -190,11 +233,14 @@ export default function LocationPickerModal({
                   }}
                 />
               )}
-              renderOption={(props, option) => (
-                <li {...props} key={option.place_id}>
-                  <span className={styles.suggestion}>{option.display_name}</span>
-                </li>
-              )}
+              renderOption={(props, option) => {
+                const result = option as NominatimResult;
+                return (
+                  <li {...props} key={result.place_id}>
+                    <span className={styles.suggestion}>{result.display_name}</span>
+                  </li>
+                );
+              }}
             />
           </div>
           <IconButton
