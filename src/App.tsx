@@ -1156,6 +1156,7 @@ export default function App() {
                     onBulkDelete={() => setIsBulkDeleteOpen(true)}
                     onMarkAllPage={handleMarkAllPage}
                     hideActions={isKidsMode}
+                    showNoLocationWarning={activeTab === "gallery"}
                     toolbarSlot={!isKidsMode && authToken && (
                       <nav className={styles.subNav}>
                         <button type="button" className={`${styles.subNavLink} ${gallerySubTab === "main" ? styles.subNavLinkActive : ""}`} onClick={() => navigate("/gallery")}>

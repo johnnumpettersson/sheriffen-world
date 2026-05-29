@@ -13,6 +13,7 @@ interface ImageCardProps {
   onRemove: (id: string) => void;
   onEditMetadata: (id: string) => void;
   isAuthenticated?: boolean;
+  showNoLocationWarning?: boolean;
   locale: Locale;
   bulkSelectMode?: boolean;
   isChecked?: boolean;
@@ -39,6 +40,7 @@ export default function ImageCard({
   onRemove,
   onEditMetadata,
   isAuthenticated = false,
+  showNoLocationWarning = true,
   locale,
   bulkSelectMode = false,
   isChecked = false,
@@ -69,6 +71,7 @@ export default function ImageCard({
 
   const [thumbLoaded, setThumbLoaded] = useState(false);
   const isOversized = image.mediaType !== "video" && !image.type?.startsWith("video/") && image.size > 5 * 1024 * 1024;
+  const isNoLocation = isAuthenticated && showNoLocationWarning && image.location === null && image.mediaType !== "video" && !image.type?.startsWith("video/");
 
   const handleClick = () => {
     if (bulkSelectMode) {
@@ -80,7 +83,7 @@ export default function ImageCard({
 
   return (
     <article
-      className={`${styles.card} ${isSelected && !bulkSelectMode ? styles.selected : ""} ${isChecked ? styles.checked : ""} ${isOversized ? styles.oversized : ""}`}
+      className={`${styles.card} ${isSelected && !bulkSelectMode ? styles.selected : ""} ${isChecked ? styles.checked : ""} ${isOversized ? styles.oversized : ""} ${isNoLocation ? styles.noLocation : ""}`}
       onClick={handleClick}
       tabIndex={0}
       role="button"
@@ -117,6 +120,9 @@ export default function ImageCard({
           <span className={styles.pinBadge} title={t.hasGps}>
             📍
           </span>
+        )}
+        {isNoLocation && (
+          <span className={styles.noLocationBadge}>NO GPS</span>
         )}
         {(isUnpreviewed || isRecentlyPreviewed) && (
           <span

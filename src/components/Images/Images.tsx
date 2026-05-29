@@ -30,6 +30,7 @@ interface ImagesProps {
   onMarkAllPage?: () => void;
   toolbarSlot?: React.ReactNode;
   hideActions?: boolean;
+  showNoLocationWarning?: boolean;
 }
 
 export interface BulkActionsMenuProps {
@@ -126,6 +127,7 @@ export default function Images({
   onMarkAllPage,
   toolbarSlot,
   hideActions = false,
+  showNoLocationWarning = true,
 }: ImagesProps) {
   const t =
     locale === "sv"
@@ -268,6 +270,7 @@ export default function Images({
             onRemove={onRemove}
             onEditMetadata={onEditMetadata}
             isAuthenticated={isAuthenticated}
+            showNoLocationWarning={showNoLocationWarning}
             locale={locale}
             bulkSelectMode={bulkSelectMode}
             isChecked={selectedImageIds?.has(image.id) ?? false}
