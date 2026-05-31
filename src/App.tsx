@@ -21,7 +21,10 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import MapIcon from "@mui/icons-material/Map";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 import { GB, SE } from "country-flag-icons/react/3x2";
 import * as Flags from "country-flag-icons/react/3x2";
 import { useTheme } from "@mui/material/styles";
@@ -1592,51 +1595,54 @@ export default function App() {
                 },
               }}
             />
-            <TextField
-              label={t.date}
-              value={metadataForm.date}
-              onChange={(event) => {
-                const raw = event.target.value;
-                const parsed = parseDateFreeform(raw);
-                setMetadataForm((prev) => ({
-                  ...prev,
-                  date: parsed !== null ? parsed : raw,
-                }));
-              }}
-              onBlur={() => {
-                const parsed = parseDateFreeform(metadataForm.date);
-                if (parsed !== null) {
-                  setMetadataForm((prev) => ({ ...prev, date: parsed }));
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label={t.date}
+                value={metadataForm.date ? dayjs(metadataForm.date) : null}
+                onChange={(val) =>
+                  setMetadataForm((prev) => ({
+                    ...prev,
+                    date: val ? val.format("YYYY-MM-DD") : "",
+                  }))
                 }
-              }}
-              placeholder="yyyy-mm-dd"
-              slotProps={{
-                inputLabel: { shrink: true },
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <input
-                        ref={hiddenDateInputRef}
-                        type="date"
-                        style={{ display: "none" }}
-                        value={metadataForm.date}
-                        onChange={(e) =>
-                          setMetadataForm((prev) => ({ ...prev, date: e.target.value }))
-                        }
-                      />
-                      <IconButton
-                        size="small"
-                        title={t.date}
-                        onClick={() => hiddenDateInputRef.current?.showPicker()}
-                      >
-                        <CalendarTodayIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              fullWidth
-            />
+                slotProps={{
+                  textField: { fullWidth: true },
+                  openPickerButton: { size: "small" },
+                  day: {
+                    sx: {
+                      "&.Mui-selected": {
+                        backgroundColor: "#f4a460 !important",
+                        color: "#111827 !important",
+                        fontWeight: 700,
+                      },
+                      "&.Mui-selected:hover": {
+                        backgroundColor: "#e8944a !important",
+                      },
+                      "&:hover": {
+                        backgroundColor: "rgba(244,164,96,0.15) !important",
+                      },
+                      "&.MuiPickersDay-today": {
+                        borderColor: "#f4a460",
+                      },
+                    },
+                  },
+                  desktopPaper: {
+                    sx: {
+                      borderRadius: "14px",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+                      "& .MuiPickersCalendarHeader-label": { fontWeight: 600 },
+                      "& .MuiPickersArrowSwitcher-button": { color: "#f4a460" },
+                      "& .MuiPickersCalendarHeader-switchViewButton": { color: "#f4a460" },
+                      "& .MuiDayCalendar-weekDayLabel": { color: "#9ca3af", fontWeight: 600 },
+                      "& .MuiPickersYear-yearButton.Mui-selected": {
+                        backgroundColor: "#f4a460 !important",
+                        color: "#111827 !important",
+                      },
+                    },
+                  },
+                }}
+              />
+            </LocalizationProvider>
             <TextField
               label={t.comment}
               value={metadataForm.comment}
