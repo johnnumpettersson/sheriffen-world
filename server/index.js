@@ -34,14 +34,13 @@ const STORAGE_STARTUP_BLOCKING =
   (process.env.STORAGE_STARTUP_BLOCKING ?? "false") === "true";
 
 const PORT = Number(process.env.PORT ?? 8080);
-const BUCKET = process.env.R2_BUCKET || "gallery-images";
-
+const BUCKET = process.env.R2_BUCKET || "";
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || "";
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || "";
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || "";
 
-if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
-  console.error("[api] FATAL: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY must all be set.");
+if (!BUCKET || !R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+  console.error("[api] FATAL: R2_BUCKET, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY must all be set.");
   process.exit(1);
 }
 
