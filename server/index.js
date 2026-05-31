@@ -34,7 +34,19 @@ const STORAGE_STARTUP_BLOCKING =
   (process.env.STORAGE_STARTUP_BLOCKING ?? "false") === "true";
 
 const PORT = Number(process.env.PORT ?? 8080);
-const BUCKET = process.env.R2_BUCKET ?? "gallery-images";
+const BUCKET = process.env.R2_BUCKET || "gallery-images";
+
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || "";
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || "";
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || "";
+
+if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+  console.error("[api] FATAL: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY must all be set.");
+  process.exit(1);
+}
+
+console.log(`[api] R2 bucket: "${BUCKET}" endpoint: ${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`);
+
 const NOMINATIM_URL =
   process.env.NOMINATIM_URL ??
   "https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&namedetails=1&zoom=18";
@@ -52,10 +64,10 @@ const UPLOAD_AUTH_SECRET =
   randomBytes(32).toString("hex");
 
 const minio = new MinioClient({
-  endPoint: `${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  endPoint: `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   useSSL: true,
-  accessKey: process.env.R2_ACCESS_KEY_ID ?? "",
-  secretKey: process.env.R2_SECRET_ACCESS_KEY ?? "",
+  accessKey: R2_ACCESS_KEY_ID,
+  secretKey: R2_SECRET_ACCESS_KEY,
 });
 
 const app = express();
