@@ -21,6 +21,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import MapIcon from "@mui/icons-material/Map";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { GB, SE } from "country-flag-icons/react/3x2";
 import * as Flags from "country-flag-icons/react/3x2";
 import { useTheme } from "@mui/material/styles";
@@ -245,6 +246,7 @@ export default function App() {
   >(() => new Set());
   const previewedBadgeTimeoutsRef = useRef<Map<string, number>>(new Map());
   const swipeTouchStartXRef = useRef<number | null>(null);
+  const hiddenDateInputRef = useRef<HTMLInputElement>(null);
   const [previewFadeKey, setPreviewFadeKey] = useState(0);
   const previewFadeActiveRef = useRef(false);
   const [mapPreviewMode, setMapPreviewMode] = useState(false);
@@ -1592,16 +1594,46 @@ export default function App() {
             />
             <TextField
               label={t.date}
-              type="date"
               value={metadataForm.date}
-              onChange={(event) =>
+              onChange={(event) => {
+                const raw = event.target.value;
+                const parsed = parseDateFreeform(raw);
                 setMetadataForm((prev) => ({
                   ...prev,
-                  date: event.target.value,
-                }))
-              }
+                  date: parsed !== null ? parsed : raw,
+                }));
+              }}
+              onBlur={() => {
+                const parsed = parseDateFreeform(metadataForm.date);
+                if (parsed !== null) {
+                  setMetadataForm((prev) => ({ ...prev, date: parsed }));
+                }
+              }}
+              placeholder="yyyy-mm-dd"
               slotProps={{
                 inputLabel: { shrink: true },
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <input
+                        ref={hiddenDateInputRef}
+                        type="date"
+                        style={{ display: "none" }}
+                        value={metadataForm.date}
+                        onChange={(e) =>
+                          setMetadataForm((prev) => ({ ...prev, date: e.target.value }))
+                        }
+                      />
+                      <IconButton
+                        size="small"
+                        title={t.date}
+                        onClick={() => hiddenDateInputRef.current?.showPicker()}
+                      >
+                        <CalendarTodayIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
               }}
               fullWidth
             />
@@ -1756,6 +1788,41 @@ function formatDateInputValue(value: Date): string {
   const month = String(value.getUTCMonth() + 1).padStart(2, "0");
   const day = String(value.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+const MONTH_NAMES: Record<string, number> = {
+  jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12,
+};
+
+function parseDateFreeform(input: string): string | null {
+  const s = input.trim();
+  if (!s) return "";
+
+  // Already yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+  // dd/mm/yyyy or dd-mm-yyyy or dd.mm.yyyy
+  const dmy = s.match(/^(\d{1,2})[/\-.:](\d{1,2})[/\-.:](\d{4})$/);
+  if (dmy) {
+    return `${dmy[3]}-${dmy[2].padStart(2,"0")}-${dmy[1].padStart(2,"0")}`;
+  }
+
+  // "04 May 2026" or "4 May 2026"
+  const dMonthY = s.match(/^(\d{1,2})\s+([a-z]+)\s+(\d{4})$/i);
+  if (dMonthY) {
+    const mon = MONTH_NAMES[dMonthY[2].toLowerCase().slice(0, 3)];
+    if (mon) return `${dMonthY[3]}-${String(mon).padStart(2,"0")}-${dMonthY[1].padStart(2,"0")}`;
+  }
+
+  // yyyy/mm/dd
+  const ymd = s.match(/^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})$/);
+  if (ymd) return `${ymd[1]}-${ymd[2].padStart(2,"0")}-${ymd[3].padStart(2,"0")}`;
+
+  // Fallback: native Date parse
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return formatDateInputValue(d);
+
+  return null;
 }
 
 function formatCoordinatePair(
