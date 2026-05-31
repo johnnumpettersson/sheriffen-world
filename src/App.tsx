@@ -1599,6 +1599,7 @@ export default function App() {
               <DatePicker
                 label={t.date}
                 value={metadataForm.date ? dayjs(metadataForm.date) : null}
+                closeOnSelect={false}
                 onChange={(val) =>
                   setMetadataForm((prev) => ({
                     ...prev,
