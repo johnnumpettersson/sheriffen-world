@@ -496,15 +496,16 @@ export default function App() {
     navigate("/");
   };
 
-  const sortedImages = useMemo(
-    () =>
-      [...images].sort((a, b) => {
-        const aTime = (a.takenAt ?? a.uploadedAt).getTime();
-        const bTime = (b.takenAt ?? b.uploadedAt).getTime();
-        return bTime - aTime;
-      }),
-    [images],
-  );
+  // For map tab: sort all images client-side (no pagination).
+  // For gallery tabs: use galleryPageImages — the exact server-sorted subset the user sees on screen.
+  const sortedImages = useMemo(() => {
+    if (activeTab !== "map") return galleryPageImages;
+    return [...images].sort((a, b) => {
+      const aTime = (a.takenAt ?? a.uploadedAt).getTime();
+      const bTime = (b.takenAt ?? b.uploadedAt).getTime();
+      return bTime - aTime;
+    });
+  }, [activeTab, galleryPageImages, images]);
 
   const imagesWithLocation = mainGallery.images.filter((img) => img.location !== null);
   const hasUnseenUploads = newUploadCount > 0 && topTab !== "gallery";

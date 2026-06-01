@@ -1,6 +1,6 @@
 import type { GalleryImage } from "../../types";
 import type { Locale } from "../../i18n";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import type React from "react";
 import ImageCard from "../ImageCard/ImageCard";
 import styles from "./Images.module.css";
@@ -161,11 +161,7 @@ export default function Images({
   const hasImages = totalItems > 0;
   const pageButtons = getVisiblePages(page, totalPages);
 
-  const sortedImages = useMemo(() => {
-    return [...images].sort(
-      (a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime(),
-    );
-  }, [images]);
+  const sortedImages = images;
 
   if (isLoading && images.length === 0 && !uploadSlot) {
     return <div className={styles.empty}>{t.loading}</div>;
